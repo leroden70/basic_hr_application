@@ -1,0 +1,52 @@
+<div id="entholidays_dialog">
+    <div id="opHeader">
+        <h2 id="opModalTitle">Entitlement to holidays</h2>
+        <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
+    </div>
+    <h4>Bruce Willis</h4>
+    <div class="period">
+        <select id="periods">
+                    <option value="2010-01-01">from 2010-01-01 to 2014-12-31</option>
+                    <option value="2015-01-01" selected>from 2015-01-01</option>
+        </select>
+    </div>
+    <div class="ehtable">
+        <table>
+            <thead>
+                <tr>
+                    <th>Absence type</th>
+                    <th>Entitlement</th>
+                    <th>balance</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            	<tr>
+            		<td>Legal holidays: </td>
+	            	<td>20</td>
+	            	<td>20</td>
+	            	<td>
+				<button type="button" id="modify_entholiday_button" onclick="performOperation('update_entholiday_dialog',{{ employee_id }})">View Job History</button>
+	            	</td>
+            	</tr>
+            	<tr>
+            		<td>Xtra-legal holidays: </td>
+	            	<td>5</td>
+	            	<td>5</td>
+	            	<td>
+				<button type="button" id="modify_entholiday_button" onclick="performOperation('update_entholiday_dialog',{{ employee_id }})">View Job History</button>
+	            	</td>
+            	</tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+
+        <button type="button" id="absence_type_button"
+                onclick="performOperation('add_entholidays_dialog',{{ employee_id }})">
+            +
+        </button>
+        <span>[add another type of absence]</span>
+    </div>
+
+</div>

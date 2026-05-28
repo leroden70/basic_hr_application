@@ -1,0 +1,28 @@
+<div id="all_departments_dialog">
+    <div id="opHeader">
+        <h2 id="opModalTitle">Edit department (manager)</h2>
+        <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
+    </div>
+    <div>
+        <span>Department</span>
+        <select id="departments">
+            {% for dept in departments_list %}
+                {% if dept['department_id'] == department['department_id'] %}
+                    <option value="{{ dept['department_id'] }}" selected>
+                {% else %}
+                    <option value="{{ dept['department_id'] }}">
+                {% endif %}
+				{{ dept['department_name'] }}
+				</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <span>Manager :</span>
+        <input type="text" id="fname" name="fname" value="{{ department['manager_name'] }}"/>
+        <button type="button" id="manager_submit_button">Submit</button>
+    </div>
+    <div>
+        <span>Employee list</span>
+    </div>
+</div>

@@ -1,0 +1,32 @@
+<!DOCTYPE html><div id="all_jobs_dialog">
+    <div id="opHeader">
+        <h2 id="opModalTitle">Edit job (salaries)</h2>
+        <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
+    </div>
+    <div>
+        <span>Job title: </span>
+        <select id="jobs">
+            {% for j in jobs_list %}
+                {% if j['department_id'] == job['department_id'] %}
+                    <option value="{{ j['department_id'] }}" selected>
+                {% else %}
+                    <option value="{{ j['department_id'] }}">
+                {% endif %}
+				{{ j['job_title'] }}
+				</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <span>Minimum Salary:</span>
+        <input type="text" id="minsal" name="minsal" value="{{ job['min_salary'] }}"/>
+    </div>
+    <div>
+        <span>Maximum Salary:</span>
+        <input type="text" id="maxsal" name="maxsal" value="{{ job['max_salary'] }}"/>
+    </div>
+    <div>
+        <button type="button" id="salary_submit_button">Submit</button>
+    </div>
+</div>
+

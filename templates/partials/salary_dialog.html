@@ -1,0 +1,28 @@
+<div id="salary_dialog">
+    <div id="opHeader">
+        <h2 id="opModalTitle">Employee's salary</h2>
+        <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
+    </div>
+    <!-- Employee's salary-->
+    <div id="sal_emp_name">{{ emp['first_name'] }} {{ emp['last_name'] }}</div>
+    <div>
+        <div>
+            <span>Salary :</span>
+            <input type="text" id="sal" name="sal" value="{{ emp['salary'] }}"/>
+            <button type="button" id="dept_submit_button">Submit</button>
+        </div>
+        <div>
+            <span>Job Title</span>
+            <span>{{ emp['job_title'] }}</span>
+        </div>
+        <div>
+            <span>Minimum salary : </span>
+            <span>{{ min_salary }}</span>
+        </div>
+        <div>
+            <span>Maximum salary : </span>
+            <span>{{ max_salary }}</span>
+        </div>
+    </div>
+    <div class="err_msg">{{ err_msg }}</div>
+</div>

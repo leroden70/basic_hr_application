@@ -1,0 +1,57 @@
+<div id="holidays_dialog">
+    <div id="opHeader">
+        <h2 id="opModalTitle">Entitlement to holidays</h2>
+        <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
+    </div>
+    <h4>John Travolta</h4>
+    <div class="years">
+        <select>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026" selected>2026</option>
+        </select>
+    </div>
+    <div class="abstable">
+        <table>
+            <thead>
+                <tr>
+                    <th>Absence type</th>
+                    <th>Start date</th>
+                    <th>End date</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Legal holidays</td>
+                    <td>"02/03/2026"</td>
+                    <td>"06/03/2026"</td>
+                    <td>
+                        <button type="button" id="modify_entholiday_button"
+                                onclick="performOperation('update_holiday_dialog',{{ employee_id }})">
+                            View Job History
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Legal holidays</td>
+                    <td>"06/07/2026"</td>
+                    <td>"17/07/2026"</td>
+                    <td>
+                        <button type="button" id="modify_entholiday_button"
+                                onclick="performOperation('update_holiday_dialog',{{ employee_id }})">
+                            View Job History
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <button type="button" id="absence_type_button"
+                onclick="performOperation('add_holidays_dialog',{{ employee_id }})">
+            +
+        </button>
+        <span>[add another absence]</span>
+    </div>
+</div>

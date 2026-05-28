@@ -1,0 +1,43 @@
+<div id="job_history_dialog">
+    <div id="opHeader">
+        <h2 id="opModalTitle">Job history</h2>
+        <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
+    </div>
+    <h4>Robert de Niro</h4>
+    <div class="jobhisttable">
+        <table>
+            <thead>
+                <tr>
+                    <th>Start date</th>
+                    <th>End date</th>
+                    <th>Job title</th>
+                    <th>Department</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>"01/01/2012"</td>
+                    <td>"21/12/2016"</td>
+                    <td>Sales Representative</td>
+                    <td>Sales</td>
+                </tr>
+                <tr>
+                    <td>"01/01/2012"</td>
+                    <td>"21/12/2016"</td>
+                    <td>Administration Assistant</td>
+                    <td>Executive</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <button type="button" id="job_dialog_button"
+                onclick="performOperation('job_dialog',{{ employee_id }})">
+            Change Job
+        </button>
+        <button type="button" id="department_dialog_button"
+                onclick="performOperation('department_dialog',{{ employee_id }})">
+            Change department
+        </button>
+    </div>
+</div>

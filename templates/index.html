@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>My employees</title>
+        <link rel= "stylesheet" type= "text/css" href= "{{url_for('static',filename='styles/index.css')}}">
+        <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        <link rel="icon" type="image/x-icon" href="{{url_for('static',filename='images/favicon.ico')}}">
+        <!--script src="{{url_for('static',filename='js/page.js')}}" defer></script-->
+        <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+        <script src="{{url_for('static',filename='js/page.js')}}"></script>
+    </head>
+    <body>
+        <h1>Employees</h1>
+        <input type="text" id="searchInput" onkeyup="filterData()" placeholder="Search for names.." title="Type in a name">
+        <div id="hello"></div>
+        <div id="emplist"></div>
+        <div class="modals">
+            <div id="employeeModal">
+                <div id="emp_detail"></div>
+            </div>
+            <div id="operationsModal">
+                <div class="opdia" id="dialog"></div>
+            </div>
+        </div>
+        <script src="{{ url_for('static', filename='js/dialog.js') }}"></script>
+    </body>
+</html>

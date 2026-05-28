@@ -1,0 +1,63 @@
+<div id="job_dialog">
+    <div id="opHeader">
+        <h2 id="opModalTitle">Employee's job</h2>
+        <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
+    </div>
+
+    <div id="job_emp_name">{{ emp['first_name'] }} {{ emp['last_name'] }}</div>
+
+    <div>
+        <form
+            id="job_form"
+            hx-post="{{ url_for('get_job_dialog') }}"
+            hx-target="#job_dialog"
+            hx-swap="outerHTML"
+            hx-boost="true"
+            onsubmit="return false;"
+            onsubmit="console.log('Submit déclenché !'); return true;"
+        >
+            <!-- onsubmit="console.log('Submit déclenché !'); return true;" -->
+            <span>Job title :</span>
+            <input type="hidden" name="cur_employee_id" value="{{ emp['employee_id'] }}">
+            <input type="hidden" name="cur_job_id" value="{{ emp['job_id'] }}">
+            <input type="hidden" name="cur_hire_date" value="{{ emp['hire_date'] }}">
+            <input type="hidden" name="cur_department_id" value="{{ emp['department_id'] }}">
+
+            <select name="user_choice" id="jobs">
+                {% for job in jobs_list %}
+                    <option value="{{ job['job_id'] }}" {% if job['job_id'] == emp['job_id'] %}selected{% endif %}>
+                        {{ job['job_title'] }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" name="action_button" value="job_submit_button" id="job_submit_button">Submit</button>
+        </form>
+    </div>
+
+    {% if err_msg %}
+        <div class="err_msg" style="color: red; margin-top: 10px; font-weight: bold;">⚠️ {{ err_msg }}</div>
+    {% endif %}
+</div>
+
+<script>
+const form = document.getElementById("job_form");
+
+form.addEventListener("submit", function(event) {
+    event.preventDefault(); // empêche le rechargement de la page
+
+    const formData = new FormData(form);
+
+    // récupérer une valeur précise
+    const employee_id = formData.get("employee_id");
+    const user_choice = formData.get("user_choice");
+
+    console.log(employee_id);
+    console.log(user_choice);
+
+    // convertir toutes les données en objet JS
+    const data = Object.fromEntries(formData.entries());
+
+    console.log(data);
+});
+</script>

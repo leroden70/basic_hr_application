@@ -1,0 +1,232 @@
+/* ***************************************************** */
+/* General for the page */
+/* ***************************************************** */
+body {
+    font-family: "Calibri", sans-serif;
+}
+/* ***************************************************** */
+/* Employee list table*/
+/* ***************************************************** */
+#searchInput {
+    background-image: url('/static/images/searchicon.png'); /* Add a search icon to input */
+    background-position: 10px 12px; /* Position the search icon */
+    background-repeat: no-repeat; /* Do not repeat the icon image */
+    width: 80%; /* Full-width */
+    font-size: 16px; /* Increase font-size */
+    padding: 12px 20px 12px 40px; /* Add some padding */
+    border: 1px solid #ddd; /* Add a grey border */
+    margin-bottom: 12px; /* Add some space below the input */
+}
+#emplist {
+    /*max-height: 300px;*/
+    height: 300px !important;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    width: 100%;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid;
+}
+thead th {
+    position: sticky;
+    top: 0;
+    #background-color: #f1f1f1;
+    background-color: #4444BB;
+    color: white;
+    z-index: 1;
+}
+th, td {
+    padding-left: 15px;
+    padding-right: 15px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+/*#emp_table table tbody tr:nth-child(even) {
+
+}*/
+
+#emplist table tbody tr:nth-child(odd) {
+    background-color: lightyellow;
+}
+
+/* TABLE STYLES
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+#emplist {
+    margin-bottom: 20px;
+}
+.table-clickable {
+  text-align: left;
+  border-collapse: collapse;
+  border-left: 1px solid var(--darkblue);
+  border-right: 1px solid var(--darkblue);
+  #margin: 20px auto;
+}
+
+.table-clickable th,
+.table-clickable td {
+  /*padding: 20px 10px;*/
+}
+
+.table-clickable th {
+  /*color: var(--white);*/
+  /*background: var(--darkblue);*/
+}
+
+.table-clickable tbody tr {
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+}
+
+.table-clickable tbody tr:not(:first-child) {
+  border-top: 1px solid var(--darkblue);
+}
+
+.table-clickable tbody tr:last-child {
+  border-bottom: 1px solid var(--darkblue);
+}
+
+.table-clickable tbody tr:hover {
+  color: var(--white);
+  /*background: var(--darkblue);*/
+  background: royalblue !important;
+}
+#emplist {
+    margin-bottom: 30px;
+}
+/* DETAIL */
+#emp_detail {
+	display: flex;
+	flex-direction: row;
+	font-family: sans-serif;
+	width: 50%;
+}
+#emp_data {
+	padding: 0 20px 0 20px;
+}
+#emp_oper, #emp_data {
+	display: flex;
+	flex-direction: column;
+}
+#emp_name {
+	font-weight: bold;
+    font-size: larger;
+    margin-bottom: 20px;
+}
+#emp_id_data, #emp_job_data, #emp_dept_data, #emp_sal_data {
+	display: flex;
+	flex-direction : row;
+}
+#id_key, #job_key, #dept_key, #sal_key {
+	width: 110px;
+}
+#job_button, #department_button, #salary_button {
+	width: 140px;
+}
+#job_value, #dept_value, #sal_value {
+	width: 170px;
+}
+#emp_oper * {
+	margin: 0 0 10px 20px;
+    width: 175px;
+}
+
+.modals * {
+    /*border: 1px solid;*/
+}
+.modals {
+    display: flex;
+    flex-direction: row;
+}
+#employeeModal {
+    width: 50%;
+}
+#operationsModal {
+    visibility: hidden;
+    width: 45%;
+    background: white;
+    border-radius: 5px;
+    border: 1px solid;
+    margin: 20px;
+    margin-left: 30px;
+    padding: 20px;
+    -webkit-box-shadow: 2px 2px 5px 0px rgba(0, 0, 0, 1);
+    -moz-box-shadow: 2px 2px 5px 0px rgba(0, 0, 0, 1);
+    width: 40%;
+}
+#opHeader {
+    display: flex;            /* Active le mode Flexbox */
+    justify-content: space-between; /* Écarte les éléments aux extrémités */
+    align-items: center;      /* Centre verticalement les éléments */
+}
+#opCloseModal {
+    /*border: 1px solid;*/
+    /*background-color: red;*/
+    font-weight: bold;
+    font-size: x-large;
+    /*padding: 0 5px 0 5px;*/
+    position: relative;
+    top: -20px;
+    left: 10px;
+    margin: 0;
+    align-self: flex-start;
+    cursor: pointer;
+}
+#opCloseModal * {
+    align-self: flex-start;
+}
+#opModalTitle {
+    margin: 0 0 15px 0;
+}
+#dept_emp_name, #job_emp_name, #sal_emp_name {
+    font-size: larger;
+    font-weight: bold;
+    padding-bottom: 10px;
+}
+
+  .caret {
+    cursor: pointer;
+    display: inline-block;
+    width: 12px;
+    margin-right: 4px;
+    user-select: none;
+    color: #555;
+  }
+  .caret::before {
+    content: "▶";
+  }
+  .caret.caret-down::before {
+    content: "▼";
+  }
+
+  /* Masquer les sous-listes par défaut */
+  #myUL ul.nested {
+    display: none;
+    margin-left: 15px;
+    padding-left: 10px;
+    list-style-type: none;
+  }
+  #myUL ul.nested.active {
+    display: block;
+  }
+
+  /* Style général */
+  #myUL {
+    list-style-type: none;
+    padding-left: 20px;
+  }
+  .listname {
+    cursor: pointer;
+    margin-left: 2px;
+  }
+  .listname:hover {
+    color: #0066cc;
+  }
+.active {
+  display: block;
+}
+.period, .ehtable, .years, .abstable {
+    margin-bottom: 20px;
+}

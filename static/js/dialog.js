@@ -1,4 +1,4 @@
-document.addEventListener("submit", function(e) {
+document.addEventListener("submit", async function(e) {
     if (e.target.id === "job_form") {
         e.preventDefault();
 
@@ -12,9 +12,9 @@ document.addEventListener("submit", function(e) {
         new_job_id = myArray[4]
         arg = [cur_employee_id, cur_job_id, cur_hire_date, cur_department_id, new_job_id]
 
-        performOperation('update_job', arg)
-        performOperation('employee_list');
-        performOperation('details_dialog', parseInt(cur_employee_id));
-        performOperation('job_dialog', parseInt(cur_employee_id));
+        await performOperation('update_job', arg, true)
+        await performOperation('employee_list');
+        await performOperation('details_dialog', parseInt(cur_employee_id));
+        await performOperation('job_dialog', parseInt(cur_employee_id));
     }
 });

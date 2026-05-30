@@ -12,9 +12,6 @@
             hx-post="{{ url_for('get_job_dialog') }}"
             hx-target="#job_dialog"
             hx-swap="outerHTML"
-            hx-boost="true"
-            onsubmit="return false;"
-            onsubmit="console.log('Submit déclenché !'); return true;"
         >
             <!-- onsubmit="console.log('Submit déclenché !'); return true;" -->
             <span>Job title :</span>

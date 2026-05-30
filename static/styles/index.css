@@ -32,7 +32,7 @@ table {
 thead th {
     position: sticky;
     top: 0;
-    #background-color: #f1f1f1;
+    /*background-color: #f1f1f1;*/
     background-color: #4444BB;
     color: white;
     z-index: 1;
@@ -62,7 +62,8 @@ th, td {
   border-collapse: collapse;
   border-left: 1px solid var(--darkblue);
   border-right: 1px solid var(--darkblue);
-  #margin: 20px auto;
+  /*margin: 20px auto;*/
+
 }
 
 .table-clickable th,
@@ -227,6 +228,6 @@ th, td {
 .active {
   display: block;
 }
-.period, .ehtable, .years, .abstable {
+.period, .ehtable, .years, .abstable, .jobhisttable {
     margin-bottom: 20px;
 }

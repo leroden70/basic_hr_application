@@ -3,7 +3,9 @@
         <h2 id="opModalTitle">Entitlement to holidays</h2>
         <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
     </div>
-    <h4>Bruce Willis</h4>
+
+    <div id="job_emp_name">{{ name }}</div>
+
     <div class="period">
         <select id="periods">
                     <option value="2010-01-01">from 2010-01-01 to 2014-12-31</option>
@@ -26,7 +28,8 @@
 	            	<td>20</td>
 	            	<td>20</td>
 	            	<td>
-				<button type="button" id="modify_entholiday_button" onclick="performOperation('update_entholiday_dialog',{{ employee_id }})">View Job History</button>
+				<button type="button" class="modify_entholiday_button" onclick="performOperation('update_entholiday_dialog',{{ employee_id }})">Change entitlement</button>
+				<button type="button" class="job_history_button" onclick="performOperation('job_history_dialog',{{ employee_id }})">View Job History</button>
 	            	</td>
             	</tr>
             	<tr>
@@ -34,7 +37,8 @@
 	            	<td>5</td>
 	            	<td>5</td>
 	            	<td>
-				<button type="button" id="modify_entholiday_button" onclick="performOperation('update_entholiday_dialog',{{ employee_id }})">View Job History</button>
+				<button type="button" class="modify_entholiday_button" onclick="performOperation('update_entholiday_dialog',{{ employee_id }})">Change entitlement</button>
+				<button type="button" class="job_history_button" onclick="performOperation('job_history_dialog',{{ employee_id }})">View Job History</button>
 	            	</td>
             	</tr>
             </tbody>

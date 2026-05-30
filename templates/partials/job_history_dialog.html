@@ -3,7 +3,9 @@
         <h2 id="opModalTitle">Job history</h2>
         <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
     </div>
-    <h4>Robert de Niro</h4>
+
+    <div id="job_emp_name">{{ name }}</div>
+
     <div class="jobhisttable">
         <table>
             <thead>
@@ -15,18 +17,18 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>"01/01/2012"</td>
-                    <td>"21/12/2016"</td>
-                    <td>Sales Representative</td>
-                    <td>Sales</td>
-                </tr>
-                <tr>
-                    <td>"01/01/2012"</td>
-                    <td>"21/12/2016"</td>
-                    <td>Administration Assistant</td>
-                    <td>Executive</td>
-                </tr>
+                {% for job in job_history %}
+                    <tr>
+                        <td>{{ job['start_date'].strftime("%d/%m/%Y") }}</td>
+                        {% if job['end_date'].strftime("%d/%m/%Y") == '31/12/9999' %}
+                            <td></td>
+                        {% else %}
+                            <td>{{ job['end_date'].strftime("%d/%m/%Y") }}</td>
+                        {% endif %}
+                        <td>{{ job['job_title'] }}</td>
+                        <td>{{ job['department_name'] }}</td>
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

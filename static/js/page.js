@@ -21,14 +21,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-async function performOperation(action, arg = 0) {
+async function performOperation(action, arg = 0, isHtmx = false) {
     try {
         var url = `/${action}`;
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+        if (isHtmx) {
+            headers['HX-Request'] = 'true';
+        }
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: headers,
             body: JSON.stringify({ id: arg }),
         });
 

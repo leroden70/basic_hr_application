@@ -169,7 +169,7 @@ class EmployeePostgresConnector(PostgresConnector):
                        dbo.jobs j
                  WHERE e.job_id = j.job_id
                    AND e.employee_id = %s
-            """, (employee_id), None, True)
+            """, (employee_id,), True, True)
         return salary_data[0]
 
     def get_department_data(self, employee_id)->dict():
@@ -184,21 +184,42 @@ class EmployeePostgresConnector(PostgresConnector):
                        dbo.departments d 
                  WHERE e.department_id = d.department_id 
                    AND e.employee_id = %s 
-            """, (employee_id), None, True)
+            """, (employee_id,), True, True)
         return employee_department_data[0]
 
     def get_job_history(self, employee_id)->list(dict()):
         with self as connector:
             employee_job_data = connector.execute_query("""
-                SELECT jh.employee_id,
-				       jh.start_date,
-					   jh.end_date,
-					   jh.job_id,
-					   jh.department_id
-                  FROM dbo.job_history jh
-				 WHERE jh.employee_id = %s
-				ORDER BY jh.start_date
-            """, (employee_id), None, True)
+                SELECT h.employee_id,
+                       h.start_date,
+                       h.end_date,
+                       j.job_title,
+                       d.department_name
+                  FROM (SELECT employee_id,
+                               start_date,
+                               end_date,
+                               job_id,
+                               department_id
+                          FROM dbo.job_history
+                        UNION
+                        (SELECT e.employee_id, 
+                                COALESCE(jh1.end_date + 1, e.hire_date) AS start_date,
+                                CAST('9999-12-31' AS DATE) AS end_date,
+                                e.job_id,
+                                e.department_id
+                           FROM dbo.employees e
+                         LEFT OUTER JOIN (SELECT employee_id,
+                                                 MAX(end_date) AS end_date
+                                            FROM dbo.job_history
+                                          GROUP BY employee_id) jh1
+                                      ON jh1.employee_id = e.employee_id)) h
+                INNER JOIN dbo.jobs j
+                        ON h.job_id = j.job_id
+                INNER JOIN dbo.departments d
+                        ON h.department_id = d.department_id
+                 WHERE h.employee_id = %s
+                ORDER BY h.start_date ASC
+            """, (employee_id,), True, True)
         return employee_job_data
 
     def get_ent_holidays(self, employee_id) -> list(dict()):
@@ -215,7 +236,7 @@ class EmployeePostgresConnector(PostgresConnector):
                        dbo.absence_types abt
                  WHERE eh.absence_type = abt.absence_type
                    AND eh.employee_id = %s
-            """, (employee_id), None, True)
+            """, (employee_id,), True, True)
         return employee_entholidays_data
 
     def update_employee_salary(self, employee_id: int, salary: float) -> None:
@@ -240,9 +261,32 @@ class EmployeePostgresConnector(PostgresConnector):
         except Exception as e:
             raise Exception(f"The department could not be updated for employee {employee_id}. Error: {e}")
 
-    def update_salary_full(self, cur_employee_id: int,cur_job_id: str,
+    def update_job_full(self, cur_employee_id: int,cur_job_id: str,
                            cur_hire_date: str,cur_department_id: int,new_job_id: str):
         self.connect()
+        # 1. update job_history :
+        #       select last record from job_history where employee_id = cur_employee_id
+        #           retrieve hist_start_date = start_date, hist_end_date = end_date
+        #       if no history
+        #           create record with
+        #               employee_id = cur_employee_id,
+        #               start_date = cur_hire_date,
+        #               end_date = today - 1,
+        #               job_id = cur_job_id,
+        #               department_id = cur_department_id
+        #       else
+        #           if hist_end_date = today - 1
+        #               do nothing
+        #           else
+        #               create a record in job_history  with
+        #                   employee_id = cur_employee_is
+        #                   start_date = hist_end_date + 1,
+        #                   end_date = today - 1,
+        #                   job_id = cur_job_id
+        #                   department_id = cur_department_id
+        # 2. update employee.job_id
+        #       set job_id = new_job_id
+        #       where employee_id = cur_employee_id
         try:
             employee_job_data = self.execute_query("""
                 SELECT jh.start_date,
@@ -250,37 +294,41 @@ class EmployeePostgresConnector(PostgresConnector):
                   FROM dbo.job_history jh
                  WHERE jh.employee_id = %s
                 ORDER BY jh.start_date desc;
-                """, (cur_employee_id) None, True, False)
-            if employee_job_data:
-                end_date = employee_job_data[0]["end_date"] + timedelta(1)
-            else:
-                end_date = cur_hire_date
-            start_date = employee_job_data[0]["start_date"]
-            try:
-                if employee_job_data[0]["end_date"] == date.today():
-                    self.execute_query("""
-                        INSERT INTO dbo.job_history (
-                            employee_id, start_date, end_date, job_id, department_id
-                        ) VALUES (
-                            %s, '%s' , CURRENT_DATE - 1, '%s', %s
-                        );
-                    """, (cur_employee_id, end_date, cur_job_id, cur_department_id), None, False, False)
-                else:
-                    self.execute_query("""
-                        UPDATE dbo.job_history 
-                           SET job_id = '%s'
-                         WHERE employee_id = %s
-                           AND start_date = '%s'
-                    """, (cur_job_id, cur_employee_id, start_date), None, False, False)
+                """, (cur_employee_id,), True, False)
+            if not employee_job_data:
                 try:
-                    self.execute_query(f"""
-                        UPDATE dbo.employees
-                           SET job_id = '%s'
-                         WHERE employee_id = %s
-                     """, (new_job_id, cur_employee_id), None, False, False)
+                    self.execute_query("""
+                       INSERT INTO dbo.job_history (employee_id, start_date, end_date, job_id,
+                                                    department_id)
+                       VALUES (%s, %s, CURRENT_DATE - 1, %s, %s);
+                    """, (cur_employee_id, cur_hire_date, cur_job_id, cur_department_id)
+                                       , False, False)
                 except Exception as e:
                     self.connection.rollback()
                     print(f"Error executing query: {e}")
+            else:
+                hist_start_date = employee_job_data[0]["start_date"]
+                hist_end_date = employee_job_data[0]["end_date"]
+                if hist_end_date != date.today() - timedelta(days=1):
+                    start_date = hist_end_date + timedelta(days=1)
+                    try:
+                        self.execute_query("""
+                            INSERT INTO dbo.job_history (
+                                employee_id, start_date, end_date, job_id, department_id
+                            ) VALUES (
+                                %s, %s , CURRENT_DATE - 1, %s, %s
+                            );
+                        """, (cur_employee_id, start_date, cur_job_id, cur_department_id),
+                                           False, False)
+                    except Exception as e:
+                        self.connection.rollback()
+                        print(f"Error executing query: {e}")
+            try:
+                self.execute_query(f"""
+                    UPDATE dbo.employees
+                       SET job_id = %s
+                     WHERE employee_id = %s
+                 """, (new_job_id, cur_employee_id), False, False)
             except Exception as e:
                 self.connection.rollback()
                 print (f"Error executing query: {e}")
@@ -289,3 +337,58 @@ class EmployeePostgresConnector(PostgresConnector):
             print(f"Error executing query: {e}")
         self.connection.commit()
         self.disconnect()
+
+    def update_department_full(self, cur_employee_id: int,cur_job_id: str,
+                           cur_hire_date: str,cur_department_id: int,new_department_id: str):
+        self.connect()
+        try:
+            employee_job_data = self.execute_query("""
+                SELECT jh.start_date,
+                       jh.end_date
+                  FROM dbo.job_history jh
+                 WHERE jh.employee_id = %s
+                ORDER BY jh.start_date desc;
+                """, (cur_employee_id,), True, False)
+            if not employee_job_data:
+                try:
+                    self.execute_query("""
+                       INSERT INTO dbo.job_history (employee_id, start_date, end_date, job_id,
+                                                    department_id)
+                       VALUES (%s, %s, CURRENT_DATE - 1, %s, %s);
+                    """, (cur_employee_id, cur_hire_date, cur_job_id, cur_department_id)
+                                       , False, False)
+                except Exception as e:
+                    self.connection.rollback()
+                    print(f"Error executing query: {e}")
+            else:
+                hist_start_date = employee_job_data[0]["start_date"]
+                hist_end_date = employee_job_data[0]["end_date"]
+                if hist_end_date != date.today() - timedelta(days=1):
+                    start_date = hist_end_date + timedelta(days=1)
+                    try:
+                        self.execute_query("""
+                            INSERT INTO dbo.job_history (
+                                employee_id, start_date, end_date, job_id, department_id
+                            ) VALUES (
+                                %s, %s , CURRENT_DATE - 1, %s, %s
+                            );
+                        """, (cur_employee_id, start_date, cur_job_id, cur_department_id),
+                                           False, False)
+                    except Exception as e:
+                        self.connection.rollback()
+                        print(f"Error executing query: {e}")
+            try:
+                self.execute_query(f"""
+                    UPDATE dbo.employees
+                       SET department_id = %s
+                     WHERE employee_id = %s
+                 """, (new_department_id, cur_employee_id), False, False)
+            except Exception as e:
+                self.connection.rollback()
+                print (f"Error executing query: {e}")
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Error executing query: {e}")
+        self.connection.commit()
+        self.disconnect()
+

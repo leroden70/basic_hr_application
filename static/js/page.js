@@ -53,6 +53,9 @@ async function performOperation(action, arg = 0, isHtmx = false) {
         if (action == "hierarchy_dialog" || action == "subalterns_dialog") {
             showTree()
         }
+        if (action == "entholidays_dialog") {
+            filter_holidays();
+        }
     } catch (error) {
         console.error('Erreur:', error);
     }

@@ -225,17 +225,37 @@ class EmployeePostgresConnector(PostgresConnector):
     def get_ent_holidays(self, employee_id) -> list(dict()):
         with self as connector:
             employee_entholidays_data = connector.execute_query("""
-                SELECT eh.employee_id,
-                       eh.absence_type,
-                       abt.absence_description,
-                       eh.start_date,
-                       eh.end_date,
-                       eh.entitlement,
-                       eh.balance
-                  FROM dbo.emp_holidays eh,
-                       dbo.absence_types abt
-                 WHERE eh.absence_type = abt.absence_type
-                   AND eh.employee_id = %s
+                SELECT u.employee_id,
+                       u.legal_year,
+                       u.absence_type,
+                       ab.absence_description,
+                       u.entitlement,
+                       u.balance
+                  FROM (SELECT eh1.employee_id,
+                               generate_series(              
+                                   EXTRACT(YEAR FROM start_date)::int       ,
+                                   EXTRACT(YEAR FROM        current_date)::int
+                               ) AS legal_year,
+                               eh1.absence_type,
+                               eh1.entitlement,
+                               eh1.balance
+                          FROM dbo.emp_holidays eh1
+                         WHERE eh1.end_date = '9999-12-31'
+                        UNION
+                        SELECT eh.employee_id,
+                               generate_series(
+                                   EXTRACT(YEAR FROM start_date)::int,
+                                   EXTRACT(YEAR FROM end_date)::int
+                               ) AS legal_year,
+                               eh.absence_type,
+                               eh.entitlement,
+                               eh.balance
+                          FROM dbo.emp_holidays eh
+                         WHERE eh.end_date <> '9999-12-31') u
+                INNER JOIN dbo.absence_types ab
+                        ON u.absence_type = ab.absence_type
+                WHERE u.employee_id = %s
+                ORDER BY u.legal_year, u.absence_type
             """, (employee_id,), True, True)
         return employee_entholidays_data
 

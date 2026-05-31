@@ -7,10 +7,7 @@
     <div id="job_emp_name">{{ name }}</div>
 
     <div class="period">
-        <select id="periods"
-                onchange="filter_holidays()"
-                onload="filter_holidays()"
-        >
+        <select id="periods" onchange="filter_holidays()">
             {% for yr in legal_years_list %}
                 {% if yr == legal_year %}
                     <option value="{{ yr }}" selected>{{ yr }}</option>
@@ -28,6 +25,7 @@
                     <th>Entitlement</th>
                     <th>balance</th>
                     <th></th>
+
                 </tr>
             </thead>
             <tbody>

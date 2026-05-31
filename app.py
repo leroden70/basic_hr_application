@@ -290,12 +290,8 @@ def get_entholidays_dialog():
 
 
     current_employee = Employee(db_connector, company_data, employee_id)
-    entholidays_list = [eh for eh in current_employee.ent_holidays]
     name = f"{current_employee.personal_data['first_name']} {current_employee.personal_data['last_name']}"
-    holidays_list = [{"legal_year": 1990, "absence_description": "Legal holiday", "entitlement": 15, "balance": 15},
-                     {"legal_year": 1990, "absence_description": "Xtra-Legal holiday", "entitlement": 5, "balance": 5}]
     holidays_list = current_employee.ent_holidays
-    test = len(holidays_list)
     legal_years_list = set([hl['legal_year'] for hl in holidays_list])
     current_year = date.today().year
     legal_year = current_year
@@ -321,11 +317,19 @@ def get_holidays_dialog():
         return jsonify({"error": "Employee ID must be an integer"}), 400
 
     current_employee = Employee(db_connector, company_data, employee_id)
-    holidays_list = []
     name = f"{current_employee.personal_data['first_name']} {current_employee.personal_data['last_name']}"
+    holidays_list = current_employee.act_holidays
+    legal_years_list = set([hl['absence_year'] for hl in holidays_list])
+    current_year = date.today().year
+    legal_year = current_year
     try:
         return render_template('partials/holidays_dialog.html',
-                               name=name, employee_id=employee_id)
+                               name=name,
+                               employee_id=employee_id,
+                               holidays_list=holidays_list,
+                               legal_years_list=legal_years_list,
+                               current_year=current_year,
+                               legal_year=legal_year)
     except Exception as e:
         return jsonify({"error": f"Error fetching employee data: {str(e)}"}), 500
 

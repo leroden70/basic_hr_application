@@ -63,6 +63,7 @@ class Employee:
         self.personal_data:dict() = self.fetch_personal_data(employee_id)
         self.job_history:list(dict()) = self.fetch_job_history(employee_id)
         self.ent_holidays:list(dict()) = self.fetch_ent_holidays(employee_id)
+        self.act_holidays:list(dict()) = self.fetch_act_holidays(employee_id)
 
     def fetch_personal_data(self, employee_id:int)->dict():
         d = [c for c in self.company_data._employees_list if c["employee_id"] == employee_id][0]
@@ -112,6 +113,15 @@ class Employee:
     def fetch_ent_holidays(self, employee_id:int)->list(dict()):
         try:
             return self.__db_connector.get_ent_holidays(employee_id)
+        except IndexError as e:
+            self.ent_holidays = []
+        except Exception as e:
+            print(e)
+            raise Exception
+
+    def fetch_act_holidays(self, employee_id:int)->list(dict()):
+        try:
+            return self.__db_connector.get_act_holidays(employee_id)
         except IndexError as e:
             self.ent_holidays = []
         except Exception as e:

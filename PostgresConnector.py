@@ -259,6 +259,49 @@ class EmployeePostgresConnector(PostgresConnector):
             """, (employee_id,), True, True)
         return employee_entholidays_data
 
+    def get_act_holidays(self, employee_id) -> list(dict()):
+        with self as connector:
+            employee_actholidays_data = connector.execute_query("""
+                select c.employee_id,
+                       c.absence_type, 
+                       d.absence_description,
+                       c.start_date,
+                       c.estimated_end_date,
+                       c.end_date,
+                       c.absence_year
+                  from (select a.employee_id,
+                               a.absence_type, 
+                               a.start_date,
+                               a.estimated_end_date,
+                               a.end_date,
+                               extract(year from a.start_date) as absence_year
+                          from dbo.absences a
+                         where extract(year from a.start_date) = extract(year from coalesce(a.end_date,a.estimated_end_date))
+                        union
+                        select a.employee_id,
+                               a.absence_type, 
+                               a.start_date,
+                               a.estimated_end_date,
+                               a.end_date,
+                               extract(year from a.start_date) as absence_year
+                          from dbo.absences a
+                         where extract(year from a.start_date) <> extract(year from coalesce(a.end_date,a.estimated_end_date))
+                        union
+                        select a.employee_id,
+                               a.absence_type, 
+                               a.start_date,
+                               a.estimated_end_date,
+                               a.end_date,
+                               extract(year from a.end_date) as absence_year
+                          from dbo.absences a
+                         where extract(year from a.start_date) <> extract(year from coalesce(a.end_date,a.estimated_end_date))) c
+                inner join dbo.absence_types d
+                        on c.absence_type = d.absence_type
+                where c.employee_id = %s
+                order by c.absence_year, c.start_date
+            """, (employee_id,), True, True)
+        return employee_actholidays_data
+
     def update_employee_salary(self, employee_id: int, salary: float) -> None:
         try:
             with self as connector:

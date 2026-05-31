@@ -6,15 +6,19 @@
 
     <div id="job_emp_name">{{ name }}</div>
 
-    <div class="years">
-        <select>
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
-            <option value="2026" selected>2026</option>
+    <div class="period">
+        <select id="periods" onchange="filter_holidays()">
+            {% for yr in legal_years_list %}
+                {% if yr == legal_year %}
+                    <option value="{{ yr }}" selected>{{ yr }}</option>
+                {% else %}
+                    <option value="{{ yr }}">{{ yr }}</option>
+                {% endif %}
+            {% endfor %}
         </select>
     </div>
-    <div class="abstable">
-        <table>
+    <div class="ehtable">
+        <table id="enthol_table">
             <thead>
                 <tr>
                     <th>Absence type</th>
@@ -25,35 +29,33 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>Legal holidays</td>
-                    <td>02/03/2026</td>
-                    <td>06/03/2026</td>
-                    <td>06/03/2026</td>
-                    <td>
-                        <button type="button" id="modify_entholiday_button"
-                                onclick="performOperation('update_holiday_dialog',{{ employee_id }})">
-                            Modify
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Legal holidays</td>
-                    <td>06/07/2026</td>
-                    <td>17/07/2026</td>
-                    <td>
-                        <button type="button" id="modify_entholiday_button"
-                                onclick="performOperation('update_holiday_dialog',{{ employee_id }})">
-                            Actual end date
-                        </button>
-                    </td>
-                    <td>
-                        <button type="button" id="modify_entholiday_button"
-                                onclick="performOperation('update_holiday_dialog',{{ employee_id }})">
-                            Modify
-                        </button>
-                    </td>
-                </tr>
+                {% for holiday in holidays_list %}
+                    <tr class="holiday_line tr{{ holiday['legal_year'] }}"
+                        data-year="{{ holiday['legal_year'] }}">
+                        <td>
+                            <input type="hidden" name="row_year" value="">
+                            {{ holiday['absence_description'] }}
+                        </td>
+                        <td>{{ holiday['start_date'] }}</td>
+                        <td>{{ holiday['estimated_end_date'] }}</td>
+                        <td>
+                            {% if (holiday['end_date']) %}
+                                {{ holiday['end_date'] }}
+                            {% else %}
+                                <button type="button" id="modify_entholiday_button"
+                                        onclick="performOperation('update_holiday_dialog',{{ employee_id }})">
+                                    Actual end date
+                                </button>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="button" id="modify_entholiday_button"
+                                    onclick="performOperation('update_holiday_dialog',{{ employee_id }})">
+                                Modify
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor%}
             </tbody>
         </table>
     </div>

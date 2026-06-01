@@ -98,3 +98,36 @@ function filterData() {
 function closeOpModal() {
     document.getElementById('operationsModal').style.display = 'none';
 }
+
+let sortDirections = {};
+
+function sortTable(columnIndex) {
+  const table = document.getElementById("employee_table");
+  const tbody = table.tBodies[0];
+  // Convertit la collection HTML des lignes (tr) en un véritable tableau JS
+  const rows = Array.from(tbody.rows);
+
+  // Alterne la direction : si déjà 'asc', passe à 'desc', sinon reste à 'asc'
+  const currentDirection = sortDirections[columnIndex] === 'asc' ? 'desc' : 'asc';
+  sortDirections = { [columnIndex]: currentDirection };
+
+  // Trie les lignes en comparant le texte des cellules de la colonne sélectionnée
+  rows.sort((rowA, rowB) => {
+    const cellA = rowA.cells[columnIndex].textContent.trim();
+    const cellB = rowB.cells[columnIndex].textContent.trim();
+
+    // Vérifie si les valeurs sont numériques pour appliquer un tri de nombres
+    const isNum = !isNaN(cellA) && !isNaN(cellB);
+
+    if (isNum) {
+      return currentDirection === 'asc' ? cellA - cellB : cellB - cellA;
+    } else {
+      return currentDirection === 'asc'
+        ? cellA.localeCompare(cellB)
+        : cellB.localeCompare(cellA);
+    }
+  });
+
+  // Réinsère les lignes triées dans le tbody (replaceChildren vide puis ajoute l'array)
+  tbody.replaceChildren(...rows);
+}

@@ -229,6 +229,50 @@ def get_salary_dialog():
     except Exception as e:
         return jsonify({"error": f"Error fetching employee data: {str(e)}"}), 500
 
+@app.route('/update_salary', methods=['POST'])
+def update_salary_dialog():
+    data = request.get_json()
+    if not data or 'id' not in data:
+        return jsonify({"error": "Employee ID is required"}), 400
+
+    try:
+        employee_id = int(data.get('id')[0])
+    except ValueError:
+        return jsonify({"error": "Employee ID must be an integer"}), 400
+
+    current_employee = Employee(db_connector, company_data, employee_id)
+    if not current_employee:
+        return jsonify({"error": f"Employee with ID {employee_id} not found"}), 404
+
+    try:
+        cur_min_salary = float(data["id"][1]);
+        cur_max_salary = float(data["id"][2]);
+        cur_salary = float(data["id"][3]);
+        try:
+            new_salary = float(data["id"][4])
+            if not (isinstance(new_salary, int) or isinstance(new_salary, float)):
+                err_msg = "The salary value must be a number."
+            elif new_salary == cur_salary:
+                err_msg = "You haven't changed the salary."
+            elif not cur_min_salary <= new_salary <= cur_max_salary:
+                err_msg = f"The new salary must be between min {cur_min_salary} and max {cur_max_salary}."
+            else:
+                current_employee.update_salary_full(new_salary)
+                company_data.update()
+                current_employee.update()
+                err_msg = ""
+        except ValueError as e:
+            err_msg = f"The salary is not a number. {e}"
+
+        emp = current_employee.personal_data
+        return render_template('partials/salary_dialog.html',
+                               emp=emp,
+                               min_salary=cur_min_salary,
+                               max_salary=cur_max_salary,
+                               err_msg=err_msg)
+    except Exception as e:
+        return jsonify({"error": f"Error fetching employee data: {str(e)}"}), 500
+
 @app.route('/hierarchy_dialog', methods=['POST'])
 def get_hierarchy_dialog():
     data = request.get_json()

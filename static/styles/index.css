@@ -231,3 +231,9 @@ th, td {
 .period, .ehtable, .years, .abstable, .jobhisttable {
     margin-bottom: 20px;
 }
+th {
+    cursor: pointer;
+}
+err_msg {
+    color: red;
+}

@@ -30,8 +30,8 @@
             </thead>
             <tbody>
                 {% for holiday in holidays_list %}
-                    <tr class="holiday_line tr{{ holiday['legal_year'] }}"
-                        data-year="{{ holiday['legal_year'] }}">
+                    <tr class="holiday_line tr{{ holiday['absence_year'] }}"
+                        data-year="{{ holiday['absence_year'] }}">
                         <td>
                             <input type="hidden" name="row_year" value="">
                             {{ holiday['absence_description'] }}

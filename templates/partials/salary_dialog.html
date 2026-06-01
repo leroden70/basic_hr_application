@@ -8,8 +8,19 @@
     <div>
         <div>
             <span>Salary :</span>
-            <input type="text" id="sal" name="sal" value="{{ emp['salary'] }}"/>
-            <button type="button" id="dept_submit_button">Submit</button>
+            <form
+                id="salary_form"
+                hx-post="{{ url_for('update_salary_dialog') }}"
+                hx-target="#salary_dialog"
+                hx-swap="outerHTML"
+            >
+                <input type="hidden" name="employee_id" value="{{ emp['employee_id'] }}">
+                <input type="hidden" name="min_salary" value="{{ min_salary }}">
+                <input type="hidden" name="max_salary" value="{{ max_salary }}">
+                <input type="hidden" name="cur_salary" value="{{ emp['salary'] }}">
+                <input type="text" id="sal" name="new_salary" value="{{ emp['salary'] }}"/>
+                <button type="submit" name="action_button" value="job_submit_button" id="job_submit_button">Submit</button>
+            </form>
         </div>
         <div>
             <span>Job Title : </span>

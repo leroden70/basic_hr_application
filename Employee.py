@@ -59,28 +59,29 @@ class CompanyData:
 class Employee:
     def __init__(self, db_connector:EmployeePostgresConnector, company_data:CompanyData, employee_id:int):
         self.__db_connector = db_connector
+        self.employee_id:int = employee_id
         self.company_data:CompanyData = company_data
-        self.personal_data:dict() = self.fetch_personal_data(employee_id)
-        self.job_history:list(dict()) = self.fetch_job_history(employee_id)
-        self.ent_holidays:list(dict()) = self.fetch_ent_holidays(employee_id)
-        self.act_holidays:list(dict()) = self.fetch_act_holidays(employee_id)
+        self.personal_data:dict() = self.fetch_personal_data()
+        self.job_history:list(dict()) = self.fetch_job_history()
+        self.ent_holidays:list(dict()) = self.fetch_ent_holidays()
+        self.act_holidays:list(dict()) = self.fetch_act_holidays()
 
-    def fetch_personal_data(self, employee_id:int)->dict():
-        d = [c for c in self.company_data._employees_list if c["employee_id"] == employee_id][0]
+    def fetch_personal_data(self)->dict():
+        d = [c for c in self.company_data._employees_list if c["employee_id"] == self.employee_id][0]
         return d
 
-    def fetch_job_history(self, employee_id:int)->list(dict()):
+    def fetch_job_history(self)->list(dict()):
         try:
-            return self.__db_connector.get_job_history(employee_id)
+            return self.__db_connector.get_job_history(self.employee_id)
         except IndexError as e:
             self.job_history = []
         except Exception as e:
             print(e)
             raise Exception
 
-    def update_employee_salary(self, employee_id: int, salary:float) -> None:
+    def update_employee_salary(self, salary:float) -> None:
         try:
-            self.__db_connector.update_salary(employee_id, salary)
+            self.__db_connector.update_salary(self.employee_id, salary)
             self.personal_data["salary"] = salary
             for idx, emp in enumerate(self.company_data.employees_list):
                 if emp["employee_id"] == employee_id:
@@ -89,9 +90,9 @@ class Employee:
             print(e)
             raise Exception
 
-    def update_employee_department(self, employee_id: int, department_id: int) -> None:
+    def update_employee_department(self, department_id: int) -> None:
         try:
-            self.__db_connector.update_department(employee_id, department_id)
+            self.__db_connector.update_department(self.employee_id, department_id)
             self.personal_data["department_id"] = department_id
             for idx, emp in enumerate(self.company_data.employees_list):
                 if emp["employee_id"] == employee_id:
@@ -110,18 +111,18 @@ class Employee:
         job_data["job_title"] = self.personal_data["job_title"]
         return job_data
 
-    def fetch_ent_holidays(self, employee_id:int)->list(dict()):
+    def fetch_ent_holidays(self)->list(dict()):
         try:
-            return self.__db_connector.get_ent_holidays(employee_id)
+            return self.__db_connector.get_ent_holidays(self.employee_id)
         except IndexError as e:
             self.ent_holidays = []
         except Exception as e:
             print(e)
             raise Exception
 
-    def fetch_act_holidays(self, employee_id:int)->list(dict()):
+    def fetch_act_holidays(self)->list(dict()):
         try:
-            return self.__db_connector.get_act_holidays(employee_id)
+            return self.__db_connector.get_act_holidays(self.employee_id)
         except IndexError as e:
             self.ent_holidays = []
         except Exception as e:
@@ -152,7 +153,19 @@ class Employee:
         new_job_id = emp_data[4]
         try:
             self.__db_connector.update_department_full(cur_employee_id, cur_job_id, cur_hire_date,
-                                                   cur_department_id, new_job_id)
+                                                       cur_department_id, new_job_id)
         except Exception as e:
             raise e
 
+    def update_salary_full(self, new_salary: float):
+        try:
+            self.__db_connector.update_salary_full(self.employee_id, new_salary)
+        except Exception as e:
+            raise e
+
+    def update(self, company_data):
+        self.company_data = company_data
+        self.personal_data = self.fetch_personal_data()
+        self.job_history = self.fetch_job_history()
+        self.ent_holidays = self.fetch_ent_holidays()
+        self.act_holidays = self.fetch_act_holidays()

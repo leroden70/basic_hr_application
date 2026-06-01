@@ -455,3 +455,22 @@ class EmployeePostgresConnector(PostgresConnector):
         self.connection.commit()
         self.disconnect()
 
+    def update_salary_full(self, cur_employee_id: int,cur_min_salary: str,
+                           cur_max_salary: str,cur_salary: int,new_salary: str):
+        self.connect()
+
+        try:
+            employee_sal_data = self.execute_query("""
+                UPDATE dbo.employees
+                   SET salary = %s
+                 WHERE employee_id = %s
+                RETURNING employee_id, salary
+            """, (cur_employee_id,new_salary), True, False)
+            if not employee_sal_data:
+                raise Exception(f"Error updating salary: {new_salary}")
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Error executing query: {e}")
+        self.connection.commit()
+        self.disconnect()
+

@@ -33,7 +33,7 @@ async function performOperation(action, arg = 0, isHtmx = false) {
         const response = await fetch(url, {
             method: 'POST',
             headers: headers,
-            body: JSON.stringify({ id: arg }),
+            body: JSON.stringify({id: arg}),
         });
 
         if (!response.ok) {
@@ -41,10 +41,13 @@ async function performOperation(action, arg = 0, isHtmx = false) {
         }
 
         const html = await response.text();
-        if (action == "details_dialog") {
+        if (action == "employee_list") {
+            document.getElementById('emplist').innerHTML = html;
+            attachRowClickEvents();
+        } else if (action == "details_dialog") {
             document.getElementById('emp_detail').innerHTML = html;
             document.getElementById('employeeModal').style.display = 'block';
-            document.getElementById('operationsModal').style.visibility = 'hidden';
+            //document.getElementById('operationsModal').style.visibility = 'hidden';
         } else {
             document.getElementById('dialog').innerHTML = html;
             document.getElementById('operationsModal').style.display = 'block';

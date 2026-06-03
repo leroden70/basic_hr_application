@@ -35,5 +35,10 @@
             <span>{{ max_salary }}</span>
         </div>
     </div>
-    <div class="err_msg">{{ err_msg }}</div>
+    {% if err_msg %}
+        <div class="err_msg">⚠️ {{ err_msg }}</div>
+    {% endif %}
+    {% if info_msg %}
+        <div class="info_msg">{{ info_msg }}</div>
+    {% endif %}
 </div>

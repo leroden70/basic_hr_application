@@ -234,6 +234,11 @@ th, td {
 th {
     cursor: pointer;
 }
-err_msg {
+.err_msg {
+    margin-top: 20px;
     color: red;
+}
+.info_msg {
+    margin-top: 20px;
+    font-weight: bold;
 }

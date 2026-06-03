@@ -12,9 +12,21 @@ document.addEventListener("submit", async function(e) {
         arg = [cur_employee_id, cur_job_id, cur_hire_date, cur_department_id, new_job_id];
 
         await performOperation('update_job', arg, true);
-        await performOperation('employee_list');
+        await performOperation('employee_list', parseInt(cur_employee_id));
         await performOperation('details_dialog', parseInt(cur_employee_id));
-        await performOperation('job_dialog', parseInt(cur_employee_id));
+        //await performOperation('job_dialog', parseInt(cur_employee_id));
+    } else if (e.target.id === "department_form") {
+        cur_employee_id = myArray[0];
+        cur_min_salary = myArray[1];
+        cur_max_salary = myArray[2];
+        cur_salary = myArray[3];
+        new_salary = myArray[4];
+        arg = [cur_employee_id, cur_min_salary, cur_max_salary, cur_salary, new_salary];
+
+        await performOperation('update_salary', arg, true);
+        await performOperation('employee_list', parseInt(cur_employee_id));
+        await performOperation('details_dialog', parseInt(cur_employee_id));
+        //await performOperation('salary_dialog', parseInt(cur_employee_id));
     } else if (e.target.id === "salary_form") {
         cur_employee_id = myArray[0];
         cur_min_salary = myArray[1];
@@ -24,6 +36,9 @@ document.addEventListener("submit", async function(e) {
         arg = [cur_employee_id, cur_min_salary, cur_max_salary, cur_salary, new_salary];
 
         await performOperation('update_salary', arg, true);
+        await performOperation('employee_list', parseInt(cur_employee_id));
+        await performOperation('details_dialog', parseInt(cur_employee_id));
+        //await performOperation('salary_dialog', parseInt(cur_employee_id));
     }
 });
 

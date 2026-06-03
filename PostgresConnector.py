@@ -61,15 +61,16 @@ class PostgresConnector:
         if not self.connection or self.connection.closed:
             print("Error : No active connexion.")
             return None
+        result = ""
 
         try:
             self.cursor.execute(query, params)
             if fetch:
                 result = [dict(row) for row in self.cursor.fetchall()]
-                return result
             if autocommit == True:
                 self.connection.commit()
             print("Query executed successfully.")
+            return result
         except Error as e:
             if autocommit == True:
                 self.connection.rollback()
@@ -386,6 +387,7 @@ class EmployeePostgresConnector(PostgresConnector):
                     except Exception as e:
                         self.connection.rollback()
                         print(f"Error executing query: {e}")
+                        raise e
             try:
                 self.execute_query(f"""
                     UPDATE dbo.employees
@@ -455,8 +457,7 @@ class EmployeePostgresConnector(PostgresConnector):
         self.connection.commit()
         self.disconnect()
 
-    def update_salary_full(self, cur_employee_id: int,cur_min_salary: str,
-                           cur_max_salary: str,cur_salary: int,new_salary: str):
+    def update_salary_full(self, cur_employee_id: int,new_salary: float):
         self.connect()
 
         try:
@@ -465,12 +466,13 @@ class EmployeePostgresConnector(PostgresConnector):
                    SET salary = %s
                  WHERE employee_id = %s
                 RETURNING employee_id, salary
-            """, (cur_employee_id,new_salary), True, False)
+            """, (new_salary,cur_employee_id), True, False)
             if not employee_sal_data:
                 raise Exception(f"Error updating salary: {new_salary}")
         except Exception as e:
             self.connection.rollback()
             print(f"Error executing query: {e}")
+            raise e
         self.connection.commit()
         self.disconnect()
 

@@ -33,11 +33,14 @@
     </div>
 
     {% if err_msg %}
-        <div class="err_msg" style="color: red; margin-top: 10px; font-weight: bold;">⚠️ {{ err_msg }}</div>
+        <div class="err_msg">⚠️ {{ err_msg }}</div>
+    {% endif %}
+    {% if info_msg %}
+        <div class="info_msg">{{ info_msg }}</div>
     {% endif %}
 </div>
 
-<script>
+<!--script>
 const form = document.getElementById("job_form");
 
 form.addEventListener("submit", function(event) {
@@ -57,4 +60,4 @@ form.addEventListener("submit", function(event) {
 
     console.log(data);
 });
-</script>
+</script-->

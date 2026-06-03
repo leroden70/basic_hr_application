@@ -112,29 +112,39 @@ def update_job():
     data = request.get_json()
     if not data or 'id' not in data:
         return jsonify({"error": "Employee ID is required"}), 400
+
     try:
         employee_id = int(data.get('id')[0])
     except ValueError:
         return jsonify({"error": "Employee ID must be an integer"}), 400
 
-    # click on Submit (HTML form data)
-    employee = Employee(db_connector, company_data, employee_id)
-    employee.update_job_full(data["id"])
-    company_data.update()
+    current_employee = Employee(db_connector, company_data, employee_id)
+    if not current_employee:
+        return jsonify({"error": f"Employee with ID {employee_id} not found"}), 404
 
-    # 1. update job_history :
-    #       if no history
-    #           create a record in job_history  with
-    #               start_date = prev_end_date + 1,
-    #               end_date = today - 1,
-    #               job_id = old_job_id
-    #       else
-    #           create record with
-    #               start_date = hire_date,
-    #               end_date = today - 1,
-    #               job_id = new_job_id
-    # 2. update employee.job_id
-
+    cur_employee_id = int(data["id"][0])
+    cur_job = data["id"][1]
+    new_job = data["id"][4]
+    try:
+        if cur_job == new_job:
+            err_msg = "You haven't changed the job."
+            info_msg = ""
+        else:
+            current_employee.update_job_full(data["id"])
+            company_data.update()
+            current_employee.update(company_data)
+            err_msg = ""
+            info_msg = "Employee job has been changed"
+    except Exception as e:
+        err_msg = f"{str(e)}"
+        info_msg = ""
+    emp = current_employee.personal_data
+    jobs_list = company_data.jobs_list
+    return render_template('partials/job_dialog.html',
+                           emp=emp,
+                           jobs_list=jobs_list,
+                           err_msg=err_msg,
+                           info_msg=info_msg)
 
 @app.route('/department_dialog', methods=['GET', 'POST'])
 def get_department_dialog():
@@ -221,11 +231,13 @@ def get_salary_dialog():
         jobs_list = company_data.jobs_list
         job = [j for j in jobs_list if j["job_id"] == emp["job_id"]][0]
         err_msg = ""
+        info_msg = ""
         return render_template('partials/salary_dialog.html',
                                emp=emp,
                                min_salary=job["min_salary"],
                                max_salary=job["max_salary"],
-                               err_msg=err_msg)
+                               err_msg=err_msg,
+                               info_msg=info_msg)
     except Exception as e:
         return jsonify({"error": f"Error fetching employee data: {str(e)}"}), 500
 
@@ -244,34 +256,39 @@ def update_salary_dialog():
     if not current_employee:
         return jsonify({"error": f"Employee with ID {employee_id} not found"}), 404
 
+    # try:
+    cur_min_salary = float(data["id"][1]);
+    cur_max_salary = float(data["id"][2]);
+    cur_salary = float(data["id"][3]);
     try:
-        cur_min_salary = float(data["id"][1]);
-        cur_max_salary = float(data["id"][2]);
-        cur_salary = float(data["id"][3]);
-        try:
-            new_salary = float(data["id"][4])
-            if not (isinstance(new_salary, int) or isinstance(new_salary, float)):
-                err_msg = "The salary value must be a number."
-            elif new_salary == cur_salary:
-                err_msg = "You haven't changed the salary."
-            elif not cur_min_salary <= new_salary <= cur_max_salary:
-                err_msg = f"The new salary must be between min {cur_min_salary} and max {cur_max_salary}."
-            else:
-                current_employee.update_salary_full(new_salary)
-                company_data.update()
-                current_employee.update()
-                err_msg = ""
-        except ValueError as e:
-            err_msg = f"The salary is not a number. {e}"
-
-        emp = current_employee.personal_data
-        return render_template('partials/salary_dialog.html',
-                               emp=emp,
-                               min_salary=cur_min_salary,
-                               max_salary=cur_max_salary,
-                               err_msg=err_msg)
+        new_salary = float(data["id"][4])
+        if new_salary == cur_salary:
+            err_msg = "You haven't changed the salary."
+            info_msg = ""
+        elif not cur_min_salary <= new_salary <= cur_max_salary:
+            err_msg = f"The new salary must be between min {cur_min_salary} and max {cur_max_salary}."
+            info_msg = ""
+        else:
+            current_employee.update_salary_full(new_salary)
+            company_data.update()
+            current_employee.update(company_data)
+            err_msg = ""
+            info_msg = "The salary has been changed."
+    except ValueError as e:
+        err_msg = f"The salary is not a number. {e}"
+        info_msg = ""
     except Exception as e:
-        return jsonify({"error": f"Error fetching employee data: {str(e)}"}), 500
+        err_msg = f"{e}"
+        info_msg = ""
+    emp = current_employee.personal_data
+    return render_template('partials/salary_dialog.html',
+                           emp=emp,
+                           min_salary=cur_min_salary,
+                           max_salary=cur_max_salary,
+                           err_msg=err_msg,
+                           info_msg=info_msg)
+# except Exception as e:
+    #     return jsonify({"error": f"Error fetching employee data: {str(e)}"}), 500
 
 @app.route('/hierarchy_dialog', methods=['POST'])
 def get_hierarchy_dialog():

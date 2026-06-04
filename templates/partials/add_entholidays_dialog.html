@@ -1,0 +1,40 @@
+<div id="add_entholidays_dialog">
+    <div id="opHeader">
+        <h2 id="opModalTitle">Add a new entitlement to holidays for {{ name }}</h2>
+        <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
+    </div>
+
+    <div>
+        <form
+            id="add_ent_form"
+            hx-post="{{ url_for('get_entholidays_dialog') }}"
+            hx-target="#entholidays_dialog"
+            hx-swap="outerHTML"
+        >
+            <input type="hidden" name="employee_id" id="employee_id" value="{{ employee_id }}" />
+            <div>
+                <label for="abstypes" class="ent">Absence type : </label>
+                <select id="abstypes" name="absence_type">
+                    {% for abt in absence_types %}
+                        <option value="{{ abt['absence_type'] }}">{{ abt['absence_description'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="entitlement" class="ent">Entitlement : </label>
+                <input type="text" name="entitlement" id="entitlement" value="" size="5" />&nbsp;days
+            </div>
+            <div>
+                <button type="submit" name="action_button"
+                        value="new_ent_submit_button" id="new_ent_submit_button">
+                    Submit entitlement value
+                </button>
+                <button type="button" id="cancel_button"
+                        onclick="closeOpModal()">
+                Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>

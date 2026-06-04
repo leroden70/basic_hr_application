@@ -9,19 +9,29 @@
 		{{ emp['last_name'] }}
 	</div>
     <div>
-        <span>Department :</span>
-        <select id="depts">
-            {% for dept in depts_list %}
-                {% if dept['department_id'] == emp['department_id'] %}
-                    <option value="{{ dept['department_id'] }}" selected>
-                {% else %}
-                    <option value="{{ dept['department_id'] }}">
-                {% endif %}
-				{{ dept['department_name'] }}
-				</option>
-            {% endfor %}
-		</select>
-        <button type="button" id="dept_submit_button">Submit</button>
+        <form
+            id="department_form"
+            hx-post="{{ url_for('get_department_dialog') }}"
+            hx-target="#department_dialog"
+            hx-swap="outerHTML"
+        >
+            <span>Department :</span>
+            <input type="hidden" name="cur_employee_id" value="{{ emp['employee_id'] }}">
+            <input type="hidden" name="cur_job_id" value="{{ emp['job_id'] }}">
+            <input type="hidden" name="cur_hire_date" value="{{ emp['hire_date'] }}">
+            <input type="hidden" name="cur_department_id" value="{{ emp['department_id'] }}">
+
+            <select name="user_choice" id="depts">
+                {% for dept in depts_list %}
+                    <option value="{{ dept['department_id'] }}" {% if dept['department_id'] == emp['department_id'] %}selected{% endif %}>
+                        {{ dept['department_name'] }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" name="action_button"
+                    value="dept_submit_button" id="dept_submit_button">Submit</button>
+        </form>
     </div>
     {% if err_msg %}
         <div class="err_msg">⚠️ {{ err_msg }}</div>

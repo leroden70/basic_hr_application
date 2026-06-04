@@ -242,3 +242,10 @@ th {
     margin-top: 20px;
     font-weight: bold;
 }
+#entitlement {
+    text-align:right;
+}
+label.ent {
+    width: 120px;
+    display: inline-block;
+}

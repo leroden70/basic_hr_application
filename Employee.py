@@ -13,14 +13,6 @@ class CompanyData:
     _departments_list: list(dict()) = field(default_factory=list, hash=False)
     _absence_types: list(dict()) = field(default_factory=list, hash=False)
 
-    '''
-    def __init__(self, db_connector:EmployeePostgresConnector):
-        self._employees_list:list(dict()) = self.get_employees_list(db_connector)
-        self._jobs_list: list(dict()) = self.get_jobs_list(db_connector)
-        self._departments_list: list(dict()) = self.get_departments_list(db_connector)
-        self._absence_types:list(dict()) = self.get_absence_types(db_connector)
-    '''
-
     def __post_init__(self):
         self.update()
 
@@ -101,8 +93,8 @@ class Employee:
                 if emp["employee_id"] == employee_id:
                     self.company_data[idx]["department_id"] = department_id
                     self.company_data[idx]["department_name"] = \
-                    [d["department_name"] for d in self.company_data.departments_list if
-                     d["department_id"] == department_id][0]
+                        [d["department_name"] for d in self.company_data.departments_list if
+                         d["department_id"] == department_id][0]
         except Exception as e:
             print(e)
             raise Exception
@@ -135,8 +127,6 @@ class Employee:
             raise Exception
 
     def update_job_full(self, emp_data: list()):
-        pass
-        employee_data = emp_data
         cur_employee_id = int(emp_data[0])
         cur_job_id = emp_data[1]
         cur_hire_date = emp_data[2]
@@ -149,22 +139,26 @@ class Employee:
             raise e
 
     def update_department_full(self, emp_data: list()):
-        pass
-        employee_data = emp_data
         cur_employee_id = int(emp_data[0])
         cur_job_id = emp_data[1]
         cur_hire_date = emp_data[2]
         cur_department_id = int(emp_data[3])
-        new_job_id = emp_data[4]
+        new_department_id = emp_data[4]
         try:
             self.__db_connector.update_department_full(cur_employee_id, cur_job_id, cur_hire_date,
-                                                       cur_department_id, new_job_id)
+                                                       cur_department_id, new_department_id)
         except Exception as e:
             raise e
 
     def update_salary_full(self, new_salary: float):
         try:
             self.__db_connector.update_salary_full(self.employee_id, new_salary)
+        except Exception as e:
+            raise e
+
+    def add_new_entholidays(self, absence_type: str, entitlement: int):
+        try:
+            self.__db_connector.add_new_entholidays(self.employee_id, absence_type, entitlement)
         except Exception as e:
             raise e
 

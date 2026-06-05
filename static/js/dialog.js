@@ -33,6 +33,10 @@ document.addEventListener("submit", async function(e) {
         entitlement = myArray[2];
         arg = [cur_employee_id, absence_type, entitlement];
         action = 'add_new_entholidays_dialog'
+    } else if (e.target.id.match("eh_form")) {
+        cur_employee_id = myArray[0];
+        absence_type = myArray[1]
+        legal_year = myArray[2]
     }
     await performOperation(action, arg, true);
     await performOperation('employee_list', parseInt(cur_employee_id));

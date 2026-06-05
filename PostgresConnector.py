@@ -510,16 +510,16 @@ class EmployeePostgresConnector(PostgresConnector):
                        balance
                   FROM (SELECT eh.employee_id,
                                eh.absence_type,
-                               eh.start_date
+                               eh.start_date,
                                eh.entitlement,
                                eh.balance,
                                RANK() OVER (ORDER BY end_date DESC) AS rnk
                           FROM emp_holidays eh
                          WHERE eh.employee_id = %s
-                           AND eh.absence_type = '%s')
+                           AND eh.absence_type = %s)
                  WHERE rnk = 1
             """, (employee_id, absence_type), True, False)
-            if employee_sal_data:
+            if employee_enthol_data:
                 try:
                     if entitlement == employee_enthol_data[0]["entitlement"]:
                         raise ValueError("The entitlement value has not changed for this absence type")
@@ -560,7 +560,7 @@ class EmployeePostgresConnector(PostgresConnector):
                                     INSERT INTO emp_holidays (
                                         employee_id, absence_type, start_date, end_date, entitlement, balance
                                     ) VALUES (
-                                        %s, %s, date(date.today().year, 1, 1), '9999-12-31', %s, %s
+                                        %s, %s, %s, '9999-12-31', %s, %s
                                     )
                                     RETURNING employee_id
                                 """, (employee_id,
@@ -582,7 +582,7 @@ class EmployeePostgresConnector(PostgresConnector):
                         INSERT INTO emp_holidays (
                             employee_id, absence_type, start_date, end_date, entitlement, balance
                         ) VALUES (
-                            %s, %s, date(date.today().year, 1, 1), '9999-12-31', %s, %s
+                            %s, %s, %s, '9999-12-31', %s, %s
                         )
                         RETURNING employee_id
                     """, (employee_id,
@@ -603,3 +603,82 @@ class EmployeePostgresConnector(PostgresConnector):
             raise e
         self.connection.commit()
         self.disconnect()
+
+    def delete_entholidays(self, employee_id: int, absence_type: str):
+        self.connect()
+        try:
+            employee_enthol_data = self.execute_query("""
+                SELECT start_date
+                  FROM emp_holidays 
+                 WHERE employee_id = %s
+                   AND CURRENT_DATE BETWEEN start_date AND end_date
+                   AND absence_type = %s
+            """, (employee_id, absence_type), True, False)
+            if employee_enthol_data:
+                try:
+                    if employee_enthol_data[0]["start_date"] == date(date.today().year, 1, 1):
+                        delete_eh_data = self.execute_query("""
+                            DELETE FROM emp_holidays
+                             WHERE employee_id = %s
+                               AND absence_type = %s
+                               AND start_date = %s
+                            RETURNING employee_id
+                        """, (employee_id,
+                              absence_type,
+                              employee_enthol_data[0]["start_date"]), True, False)
+                        if not delete_eh_data:
+                            raise Exception(f"Error deleting entitlement for employee {employee_id}, absence type {absence_type}, start date {employee_enthol_data[0]['start_date']}")
+                    else:
+                        update_eh_data = self.execute_query("""
+                            UPDATE emp_holidays
+                               SET end_date = %s
+                             WHERE employee_id = %s
+                               AND absence_type = %s
+                               AND start_date = %s
+                            RETURNING employee_id
+                        """, (date(date.today().year - 1, 12, 31),
+                              employee_id,
+                              absence_type,
+                              employee_enthol_data[0]["start_date"]), True, False)
+                        if not update_eh_data:
+                            raise Exception(f"Error updating entitlement for employee {employee_id}, absence type {absence_type}, start date {employee_enthol_data[0]['start_date']}")
+                except Exception as e:
+                    raise e
+            else:
+                raise Exception(
+                    f"The entitlement for employee {employee_id}, absence type {absence_type} does not exist")
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Error executing query: {e}")
+            raise e
+        self.connection.commit()
+        self.disconnect()
+
+specialQuery = """
+SELECT employee_id, 
+	   absence_type, 
+	   start_date,
+	   COUNT(*)
+  FROM (SELECT employee_id, 
+			   absence_type, 
+			   start_date,
+			   generate_series(start_date, 
+			                   end_date, 
+			                   '1 day'::interval)::date as absdate
+		  FROM absences
+		 WHERE employee_id = 103)
+ WHERE absdate NOT IN (SELECT weekenddate
+						FROM (SELECT generate_series(
+										'1991-01-01'::timestamp, 
+										'2050-12-31'::timestamp, 
+										'1 day'::interval
+									 )::date AS weekenddate)
+					   WHERE EXTRACT(DOW FROM weekenddate) BETWEEN 6 AND 7
+					  UNION
+					  SELECT holiday_date 
+						FROM dbo.public_holidays)
+GROUP BY employee_id, 
+         absence_type, 
+	     start_date
+ORDER BY absence_type, start_date, end_date
+"""

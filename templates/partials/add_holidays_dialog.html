@@ -1,0 +1,44 @@
+<div id="add_absence_dialog">
+    <div id="opHeader">
+        <h2 id="opModalTitle">Add a new absence for {{ name }}</h2>
+        <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
+    </div>
+
+    <div>
+        <form
+            id="add_ent_form"
+            hx-post="{{ url_for('get_entholidays_dialog') }}"
+            hx-target="#entholidays_dialog"
+            hx-swap="outerHTML"
+        >
+            <div>
+                <label for="abstypes" class="abs">Absence type : </label>
+                <select id="abstypes" name="absence_type">
+                    {% for abt in absence_types %}
+                        <option value="{{ abt['absence_type'] }}" {% if abt['absence_type'] == "LEGAL" %}selected{% endif %}>
+                            {{ abt['absence_description'] }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="start_date" class="abs">Start date :</label>
+                <input type="date" id="start_date" name="start_date" value="{{ date_today }}">
+            </div>
+            <div>
+                <label for="end_date" class="abs">End date (estimated) :</label>
+                <input type="date" id="end_date" name="end_date" value="{{ date_today }}">
+            </div>
+            <div>
+                <button type="submit" name="action_button"
+                        value="new_abs_submit_button" id="new_abs_submit_button">
+                    Submit absence
+                </button>
+                <button type="button" id="cancel_button"
+                        onclick="closeOpModal()">
+                Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -162,6 +162,12 @@ class Employee:
         except Exception as e:
             raise e
 
+    def delete_entholidays(self, absence_type: str):
+        try:
+            self.__db_connector.delete_entholidays(self.employee_id, absence_type)
+        except Exception as e:
+            raise e
+
     def update(self, company_data):
         self.company_data = company_data
         self.personal_data = self.fetch_personal_data()

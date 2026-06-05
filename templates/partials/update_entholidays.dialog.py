@@ -1,0 +1,34 @@
+<div id="update_entholidays_dialog">
+    <div id="opHeader">
+        <h2 id="opModalTitle">Modify entitlement to holidays for {{ name }}</h2>
+        <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
+    </div>
+
+    <div>
+        <form
+            id="update_ent_form"
+            hx-post="{{ url_for('get_entholidays_dialog') }}"
+            hx-target="#entholidays_dialog"
+            hx-swap="outerHTML"
+        >
+            <input type="hidden" name="employee_id" id="employee_id" value="{{ employee_id }}" />
+            <div>
+                <span class="ent">Absence type : {{ absence_type }}">{{ absence_description }}</span>
+            </div>
+            <div>
+                <label for="entitlement" class="ent">Entitlement : </label>
+                <input type="text" name="entitlement" id="entitlement" value="" size="5" />&nbsp;days
+            </div>
+            <div>
+                <button type="submit" name="action_button"
+                        value="upd_ent_submit_button" id="upd_ent_submit_button">
+                    Submit entitlement value
+                </button>
+                <button type="button" id="cancel_button"
+                        onclick="closeOpModal()">
+                Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

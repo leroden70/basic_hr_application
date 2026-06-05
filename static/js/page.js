@@ -56,7 +56,11 @@ async function performOperation(action, arg = 0, isHtmx = false) {
         if (action == "hierarchy_dialog" || action == "subalterns_dialog") {
             showTree()
         }
-        if (action == "entholidays_dialog" || action == "holidays_dialog") {
+        if (action == "entholidays_dialog" ||
+            action == "holidays_dialog" ||
+            action == "add_new_entholidays_dialog" ||
+            action == "delete_entholidays_dialog" ||
+            action == "update_entholidays_dialog") {
             filter_holidays();
         }
     } catch (error) {

@@ -673,7 +673,8 @@ SELECT employee_id,
 										'2050-12-31'::timestamp, 
 										'1 day'::interval
 									 )::date AS weekenddate)
-					   WHERE EXTRACT(DOW FROM weekenddate) BETWEEN 6 AND 7
+					   WHERE EXTRACT(DOW FROM weekenddate) = 0 
+                          OR EXTRACT(DOW FROM weekenddate) = 6
 					  UNION
 					  SELECT holiday_date 
 						FROM dbo.public_holidays)

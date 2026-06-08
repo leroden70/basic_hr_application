@@ -59,7 +59,10 @@ async function performOperation(action, arg = 0, isHtmx = false) {
         if (action == "entholidays_dialog" ||
             action == "holidays_dialog" ||
             action == "add_new_entholidays_dialog" ||
+            action == "add_new_holidays_dialog" ||
             action == "delete_entholidays_dialog" ||
+            action == "delete_holiday_dialog" ||
+            action == "update_new_entholidays_dialog" ||
             action == "update_entholidays_dialog") {
             filter_holidays();
         }

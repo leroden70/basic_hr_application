@@ -2,46 +2,28 @@ document.addEventListener("submit", async function(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     obj = Object.fromEntries(formData.entries());
-    const myArray = Object.values(obj);
+    const arg = Object.values(obj);
+    cur_employee_id = arg[0];
     if (e.target.id === "job_form") {
-        cur_employee_id = myArray[0];
-        cur_job_id = myArray[1];
-        cur_hire_date = myArray[2];
-        cur_department_id = myArray[3];
-        new_job_id = myArray[4];
-        arg = [cur_employee_id, cur_job_id, cur_hire_date, cur_department_id, new_job_id];
         action = 'update_job';
     } else if (e.target.id === "department_form") {
-        cur_employee_id = myArray[0];
-        cur_job_id = myArray[1];
-        cur_hire_date = myArray[2];
-        cur_department_id = myArray[3];
-        new_department_id = myArray[4];
-        arg = [cur_employee_id, cur_job_id, cur_hire_date, cur_department_id, new_department_id];
         action = 'update_department';
     } else if (e.target.id === "salary_form") {
-        cur_employee_id = myArray[0];
-        cur_min_salary = myArray[1];
-        cur_max_salary = myArray[2];
-        cur_salary = myArray[3];
-        new_salary = myArray[4];
-        arg = [cur_employee_id, cur_min_salary, cur_max_salary, cur_salary, new_salary];
         action = 'update_salary';
     } else if (e.target.id === "add_ent_form") {
-        cur_employee_id = myArray[0];
-        absence_type = myArray[1];
-        entitlement = myArray[2];
-        arg = [cur_employee_id, absence_type, entitlement];
-        action = 'add_new_entholidays_dialog'
+        action = 'add_new_entholidays_dialog';
+    } else if (e.target.id === "update_ent_form") {
+        action = 'update_new_entholidays_dialog';
     } else if (e.target.id.match("eh_form")) {
-        cur_employee_id = myArray[0];
-        absence_type = myArray[1]
-        legal_year = myArray[2]
+        action = 'delete_entholidays_dialog';
+    } else if (e.target.id === "add_abs_form") {
+        action = 'add_new_holidays_dialog'
+    } else if (e.target.id === "del_abs_form") {
+        action = 'delete_holiday_dialog'
     }
     await performOperation(action, arg, true);
-    await performOperation('employee_list', parseInt(cur_employee_id));
+    await performOperation('employee_list');
     await performOperation('details_dialog', parseInt(cur_employee_id));
-    //await performOperation('salary_dialog', parseInt(cur_employee_id));
 });
 
 function filter_holidays() {

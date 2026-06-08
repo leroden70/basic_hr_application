@@ -39,30 +39,31 @@
                         <td>{{ holiday['balance'] }}</td>
                         <td>
                             {% if legal_year == holiday['legal_year'] %}
-                                <form id="eh_form{{ employee_id }}"
-                                      hx-target="#job_dialog"
+                                <form id="eh_form{{ holiday['absence_type'] }}"
+                                      hx-target="#entholidays_dialog"
                                       hx-swap="outerHTML"
                                 >
-                                    <input type="hidden" name="absence_description"
-                                           value="{{ holiday['absence_description'] }}">
-                                    <input type="hidden" name="entitlement"
-                                           value="{{ holiday['entitlement'] }}">
-                                    <input type="hidden" name="balance"
-                                           value="{{ holiday['balance'] }}">
-                                    <button type="submit"
+                                    <button type="button"
                                             name="action_button"
                                             value="modify_entholiday{{ holiday['absence_type'] }}_button"
                                             class="modify_entholiday_button"
                                             onclick="performOperation('update_entholidays_dialog',
-                                                                      {{ employee_id }})">
+                                                                      {{ [employee_id,
+                                                                      holiday['absence_type'],
+                                                                      holiday['absence_description'],
+                                                                      holiday['entitlement']] }})">
                                         Change entitlement
                                     </button>
+                                    <input type="hidden" name="employee_id"
+                                           value="{{ employee_id }}">
+                                    <input type="hidden" name="absence_type"
+                                           value="{{ holiday['absence_type'] }}">
+                                    <input type="hidden" name="legal_year"
+                                           value="{{ legal_year }}">
                                     <button type="submit"
                                             name="action_del_button"
                                             value="delete_entholiday{{ holiday['absence_type'] }}_button"
-                                            class="delete_entholiday_button"
-                                            onclick="performOperation('delete_entholidays_dialog',
-                                                                      {{ [employee_id,holiday['absence_type'],legal_year] }})">
+                                            class="delete_entholiday_button"">
                                         Delete
                                     </button>
                                 </form>
@@ -74,19 +75,10 @@
         </table>
     </div>
     <div>
-        <form
-            id="department_form"
-            hx-post="{{ url_for('get_department_dialog') }}"
-            hx-target="#department_dialog"
-            hx-swap="outerHTML"
-        >
-            <input type="hidden" name="employee_id"
-                                       value="{{ employee_id }}">
             <button type="button" id="absence_type_button"
                     onclick="performOperation('add_entholidays_dialog',{{ employee_id }})">
                 +
             </button>
-        </form>
         <span>[add another type of absence]</span>
     </div>
     {% if err_msg %}

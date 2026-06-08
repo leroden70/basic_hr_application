@@ -42,17 +42,31 @@
                             {% if (holiday['end_date']) %}
                                 {{ holiday['end_date'] }}
                             {% else %}
-                                <button type="button" id="modify_entholiday_button"
-                                        onclick="performOperation('update_holiday_dialog',{{ employee_id }})">
+                                <button type="button" id="modify_enddate_holiday_button"
+                                        onclick="performOperation('update_enddate_holiday_dialog',{{ employee_id }})">
                                     Actual end date
                                 </button>
                             {% endif %}
                         </td>
                         <td>
-                            <button type="button" id="modify_entholiday_button"
-                                    onclick="performOperation('update_holiday_dialog',{{ employee_id }})">
-                                Modify
-                            </button>
+                            <form
+                                id="del_abs_form"
+                                hx-post="{{ url_for('delete_holiday_dialog') }}"
+                                hx-target="#delete_holiday_dialog"
+                                hx-swap="outerHTML"
+                            >
+                                <button type="button" id="modify_holiday_button"
+                                        onclick="performOperation('update_holiday_dialog',{{ employee_id }})">
+                                    Modify
+                                </button>
+                                <input type="hidden" name="employee_id" id="employee_id" value="{{ employee_id }}" />
+                                <input type="hidden" name="absence_type" id="absence_type" value="{{ holiday['absence_type'] }}" />
+                                <input type="hidden" name="start_date" id="start_date" value="{{ holiday['start_date'] }}" />
+                                <button type="submit" name="del_action_button"
+                                        value="del_abs_submit_button" id="delete_holiday_button">
+                                    Delete
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 {% endfor%}

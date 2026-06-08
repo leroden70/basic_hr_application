@@ -503,22 +503,17 @@ class EmployeePostgresConnector(PostgresConnector):
             #                          and end_date = '9999-12-31'
             #                          and the new entitlement
             employee_enthol_data = self.execute_query("""
-                SELECT employee_id,
-                       absence_type,
-                       start_date
-                       entitlement,
-                       balance
-                  FROM (SELECT eh.employee_id,
-                               eh.absence_type,
-                               eh.start_date,
-                               eh.entitlement,
-                               eh.balance,
-                               RANK() OVER (ORDER BY end_date DESC) AS rnk
-                          FROM emp_holidays eh
-                         WHERE eh.employee_id = %s
-                           AND eh.absence_type = %s)
-                 WHERE rnk = 1
-            """, (employee_id, absence_type), True, False)
+                SELECT eh.employee_id,
+                       eh.absence_type,
+                       eh.start_date,
+                       eh.end_date,
+                       eh.entitlement,
+                       eh.balance
+                  FROM emp_holidays eh
+                 WHERE eh.employee_id = %s
+                   AND eh.absence_type = %s
+                   AND CURRENT_DATE BETWEEN eh.start_date AND eh.end_date
+           """, (employee_id, absence_type), True, False)
             if employee_enthol_data:
                 try:
                     if entitlement == employee_enthol_data[0]["entitlement"]:
@@ -568,6 +563,124 @@ class EmployeePostgresConnector(PostgresConnector):
                                       date(date.today().year, 1, 1),
                                       entitlement,
                                       employee_enthol_data[0]["balance"]), True, False)
+                                if not update_eh_data:
+                                    raise Exception(f"Error inserting data for employee {employee_id}, absence type {absence_type}, start date {date(date.today().year, 1, 1)}")
+                            except Exception as e:
+                                raise e
+                except ValueError as e:
+                    raise e
+                except Exception as e:
+                    pass
+            else:
+                try:
+                    insert_eh_data = self.execute_query("""
+                        INSERT INTO emp_holidays (
+                            employee_id, absence_type, start_date, end_date, entitlement, balance
+                        ) VALUES (
+                            %s, %s, %s, '9999-12-31', %s, %s
+                        )
+                        RETURNING employee_id
+                    """, (employee_id,
+                          absence_type,
+                          date(date.today().year, 1, 1),
+                          entitlement,
+                          entitlement), True, False)
+                    if not insert_eh_data:
+                        raise Exception(
+                            f"Error inserting data for employee {employee_id}, absence type {absence_type}, start date {date(date.today().year, 1, 1)}")
+                except Exception as e:
+                    raise e
+        except ValueError as e:
+            raise e
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Error executing query: {e}")
+            raise e
+        self.connection.commit()
+        self.disconnect()
+
+    def update_new_entholidays(self, employee_id: int, absence_type: str, entitlement: int):
+        self.connect()
+        try: # find if there is already a record for that type
+            #   if the record exist
+            #       if the entitlement value has not changed
+            #           return a ValueError
+            #       else
+            #           if the record starts on 1 Jan of THISYEAR
+            #               update current record with the new entitlement
+            #           else
+            #               update current record with end_date = 31 Dec of LASTYEAR
+            #               insert new record with start_date = 01 Jan of THISYEAR
+            #                                  and end_date = '9999-12-31'
+            #                                  and the new entitlement
+            #   else
+            #       insert new record with start_date = 01 Jan of THISYEAR
+            #                          and end_date = '9999-12-31'
+            #                          and the new entitlement
+            employee_enthol_data = self.execute_query("""
+                SELECT eh.employee_id,
+                       eh.absence_type,
+                       eh.start_date,
+                       eh.end_date,
+                       eh.entitlement,
+                       eh.balance
+                  FROM emp_holidays eh
+                 WHERE eh.employee_id = %s
+                   AND eh.absence_type = %s
+                   AND CURRENT_DATE BETWEEN eh.start_date AND eh.end_date
+           """, (employee_id, absence_type), True, False)
+            if employee_enthol_data:
+                try:
+                    if entitlement == employee_enthol_data[0]["entitlement"]:
+                        raise ValueError("The entitlement value has not changed for this absence type")
+                    else:
+                        balance = employee_enthol_data[0]["balance"] + (entitlement - employee_enthol_data[0]["entitlement"])
+                        if employee_enthol_data[0]["start_date"] == date(date.today().year, 1, 1):
+                            try:
+                                update_eh_data = self.execute_query("""
+                                    UPDATE emp_holidays
+                                       SET entitlement = %s,
+                                           balance = %s
+                                     WHERE employee_id = %s
+                                       AND absence_type = %s
+                                       AND start_date = %s
+                                    RETURNING employee_id
+                                """, (entitlement,
+                                      balance,
+                                      employee_id,
+                                      absence_type,
+                                      employee_enthol_data[0]["start_date"]), True, False)
+                                if not update_eh_data:
+                                    raise Exception(f"Error updating entitlement: {entitlement} for employee {employee_id}, absence type {absence_type}, start date {employee_enthol_data[0]['start_date']}")
+                            except Exception as e:
+                                raise e
+                        else:
+                            try:
+                                update_eh_data = self.execute_query("""
+                                    UPDATE emp_holidays
+                                       SET end_date = %s
+                                     WHERE employee_id = %s
+                                       AND absence_type = %s
+                                       AND start_date = %s
+                                    RETURNING employee_id
+                                """, (date(date.today().year - 1, 12, 31),
+                                      employee_id,
+                                      absence_type,
+                                      employee_enthol_data[0]["start_date"]), True, False)
+                                if not update_eh_data:
+                                    raise Exception(f"Error updating end_date: {date(date.today().year - 1, 12, 31)} for employee {employee_id}, absence type {absence_type}, start date {employee_enthol_data[0]['start_date']}")
+                                insert_eh_data = self.execute_query("""
+                                    INSERT INTO emp_holidays (
+                                        employee_id, absence_type, start_date, end_date, entitlement, balance
+                                    ) VALUES (
+                                        %s, %s, %s, '9999-12-31', %s, %s
+                                    )
+                                    RETURNING employee_id
+                                """, (employee_id,
+                                      absence_type,
+                                      date(date.today().year, 1, 1),
+                                      entitlement,
+                                      balance), True, False)
                                 if not update_eh_data:
                                     raise Exception(f"Error inserting data for employee {employee_id}, absence type {absence_type}, start date {date(date.today().year, 1, 1)}")
                             except Exception as e:
@@ -654,19 +767,180 @@ class EmployeePostgresConnector(PostgresConnector):
         self.connection.commit()
         self.disconnect()
 
+    def add_new_holidays(self, employee_id: int, absence_type: str, start_date: date, estimated_end_date: date):
+        self.connect()
+        try:
+            employee_abs_data = self.execute_query("""
+                SELECT * 
+                  FROM absences
+                 WHERE employee_id = %s
+                   AND absence_type = %s
+                   AND (   start_date between %s and %s
+                        OR end_date between %s and %s)
+           """, (employee_id,
+                 absence_type,
+                 start_date, estimated_end_date,
+                 start_date, estimated_end_date
+                 ), True, False)
+            if employee_abs_data:
+                raise Exception("An absence of this type already exists at theses dates")
+            else:
+                employee_abs_data = self.execute_query("""
+                    INSERT INTO absences (
+                        employee_id, absence_type, start_date, estimated_end_date
+                    ) VALUES (
+                        %s, %s, %s, %s
+                    )
+                    returning employee_id 
+                """, (employee_id,
+                      absence_type,
+                      start_date,
+                      estimated_end_date
+                 ), True, False)
+                if not employee_abs_data:
+                    raise Exception("Impossible to insert the new absence")
+                workdays = self.workdays(start_date, estimated_end_date)
+                employee_entholidays = self.execute_query("""
+                    UPDATE emp_holidays
+                       SET balance = balance - %s
+                     WHERE employee_id = %s
+                       AND absence_type = %s
+                       AND %s BETWEEN start_date AND end_date
+                     RETURNING employee_id 
+                    """, (workdays,
+                          employee_id,
+                          absence_type,
+                          start_date), True, False)
+                if not employee_entholidays:
+                    raise Exception(f"Cannot update the balance of holidays")
+                bankholidays = self.bankholidays(start_date, estimated_end_date)
+                employee_pubholidays = self.execute_query("""
+                    UPDATE emp_holidays
+                       SET balance = balance - %s
+                     WHERE employee_id = %s
+                       AND absence_type = 'PUBL'
+                       AND %s BETWEEN start_date AND end_date
+                     RETURNING employee_id 
+                    """, (bankholidays,
+                          employee_id,
+                          start_date), True, False)
+                if not employee_pubholidays:
+                    raise Exception(f"Cannot update the balance of holidays")
+        except ValueError as e:
+            raise e
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Error executing query: {e}")
+            raise e
+        self.connection.commit()
+        self.disconnect()
+
+    def delete_holiday(self, employee_id: int, absence_type: str, start_date: date):
+        self.connect()
+        try:
+            employee_hol_data = self.execute_query("""
+                DELETE FROM absences 
+                 WHERE employee_id = %s
+                   AND absence_type = %s
+                   AND start_date = %s
+                RETURNING employee_id, estimated_end_date, end_date
+            """, (employee_id,
+                  absence_type,
+                  start_date), True, False)
+            if not employee_hol_data:
+                raise Exception(f"Cannot delete this absence")
+            else:
+                end_date = employee_hol_data[0]["end_date"] or employee_hol_data[0]["estimated_end_date"]
+            workdays = self.workdays(start_date, end_date)
+            employee_enthol_data = self.execute_query("""
+                UPDATE emp_holidays
+                   set balance = balance + %s 
+                 WHERE employee_id = %s
+                   AND absence_type = %s
+                   AND %s BETWEEN start_date AND end_date
+                RETURNING employee_id 
+            """, (workdays,
+                  employee_id,
+                  absence_type,
+                  start_date), True, False)
+            if not employee_enthol_data:
+                raise Exception(f"Cannot update the holidays entitlement balance")
+            bankholidays = self.bankholidays(start_date, end_date)
+            employee_enthol_data = self.execute_query("""
+                UPDATE emp_holidays
+                   set balance = balance + %s 
+                 WHERE employee_id = %s
+                   AND absence_type = 'PUBL'
+                   AND %s BETWEEN start_date AND end_date
+                RETURNING employee_id 
+            """, (bankholidays,
+                  employee_id,
+                  absence_type,
+                  start_date), True, False)
+            if not employee_enthol_data:
+                raise Exception(f"Cannot update the holidays entitlement balance")
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Error executing query: {e}")
+            raise e
+        self.connection.commit()
+        self.disconnect()
+
+    def workdays(self, start_date: date, end_date: date):
+        self.connect()
+        try:
+            workdays = self.execute_query("""
+                SELECT count(*) as workdays
+                  FROM (SELECT generate_series(%s::date, 
+                                               %s::date, 
+                                               '1 day'::interval)::date as absdate)
+                         WHERE absdate NOT IN (SELECT weekenddate
+                                                FROM (SELECT generate_series(
+                                                                '1901-01-01'::timestamp, 
+                                                                '2080-12-31'::timestamp, 
+                                                                '1 day'::interval
+                                                             )::date AS weekenddate)
+                                               WHERE EXTRACT(DOW FROM weekenddate) = 0 
+                                                  OR EXTRACT(DOW FROM weekenddate) = 6
+                                              UNION
+                                              SELECT holiday_date 
+                                                FROM dbo.public_holidays)
+                """, (start_date, end_date), True, False)
+            return workdays[0]["workdays"]
+        except Exception as e:
+            raise(e)
+
+    def bankholidays(self, start_date: date, end_date: date):
+        self.connect()
+        try:
+            bankholidays = self.execute_query("""
+                SELECT count(*) as bankholidays
+                  FROM (
+                SELECT generate_series('2025-12-23'::date, 
+                                       '2026-01-06'::date, 
+                                       '1 day'::interval)::date as absdate
+                )
+                 WHERE absdate IN (SELECT holiday_date 
+                                     FROM dbo.public_holidays)
+                    """, (start_date, end_date), True, False)
+            return bankholidays[0]["bankholidays"]
+        except Exception as e:
+            raise (e)
+
+
 specialQuery = """
+SELECT workdays FROM (
 SELECT employee_id, 
 	   absence_type, 
 	   start_date,
-	   COUNT(*)
+	   COUNT(*) as workdays
   FROM (SELECT employee_id, 
 			   absence_type, 
 			   start_date,
 			   generate_series(start_date, 
 			                   end_date, 
 			                   '1 day'::interval)::date as absdate
-		  FROM absences
-		 WHERE employee_id = 103)
+		  FROM absences)
  WHERE absdate NOT IN (SELECT weekenddate
 						FROM (SELECT generate_series(
 										'1991-01-01'::timestamp, 
@@ -682,4 +956,8 @@ GROUP BY employee_id,
          absence_type, 
 	     start_date
 ORDER BY absence_type, start_date, end_date
+) 
+WHERE employee_id = %s 
+  AND absence_type = %s 
+  AND start_date = %s
 """

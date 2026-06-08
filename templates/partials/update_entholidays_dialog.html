@@ -12,12 +12,13 @@
             hx-swap="outerHTML"
         >
             <input type="hidden" name="employee_id" id="employee_id" value="{{ employee_id }}" />
+            <input type="hidden" name="absence_type" id="absence_type" value="{{ absence_type }}" />
             <div>
-                <span class="ent">Absence type : {{ absence_type }}">{{ absence_description }}</span>
+                <span class="ent">Absence type : {{ absence_description }}</span>
             </div>
             <div>
                 <label for="entitlement" class="ent">Entitlement : </label>
-                <input type="text" name="entitlement" id="entitlement" value="" size="5" />&nbsp;days
+                <input type="text" name="entitlement" id="entitlement" value="{{ entitlement }}" size="5" />&nbsp;days
             </div>
             <div>
                 <button type="submit" name="action_button"

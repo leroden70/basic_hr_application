@@ -6,12 +6,13 @@
 
     <div>
         <form
-            id="add_ent_form"
+            id="add_abs_form"
             hx-post="{{ url_for('get_entholidays_dialog') }}"
             hx-target="#entholidays_dialog"
             hx-swap="outerHTML"
         >
             <div>
+                <input type="hidden" name="employee_id" id="employee_id" value="{{ employee_id }}" />
                 <label for="abstypes" class="abs">Absence type : </label>
                 <select id="abstypes" name="absence_type">
                     {% for abt in absence_types %}

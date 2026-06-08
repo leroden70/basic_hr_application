@@ -162,9 +162,27 @@ class Employee:
         except Exception as e:
             raise e
 
+    def update_new_entholidays(self, absence_type: str, entitlement: int):
+        try:
+            self.__db_connector.update_new_entholidays(self.employee_id, absence_type, entitlement)
+        except Exception as e:
+            raise e
+
     def delete_entholidays(self, absence_type: str):
         try:
             self.__db_connector.delete_entholidays(self.employee_id, absence_type)
+        except Exception as e:
+            raise e
+
+    def add_new_holidays(self, absence_type: str, start_date: date, estimated_end_date: date):
+        try:
+            self.__db_connector.add_new_holidays(self.employee_id, absence_type, start_date, estimated_end_date)
+        except Exception as e:
+            raise e
+
+    def delete_holiday(self, absence_type: str, start_date: date):
+        try:
+            self.__db_connector.delete_holiday(self.employee_id, absence_type, start_date)
         except Exception as e:
             raise e
 

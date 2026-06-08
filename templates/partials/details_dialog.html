@@ -30,22 +30,32 @@
     </div>
 </div>
 <div id="emp_oper">
-    <button type="button" id="hier_button" onclick="performOperation('hierarchy_dialog',{{ args['employee_id'] }})">
+    <button type="button" id="hier_button"
+            onclick="performOperation('hierarchy_dialog',{{ args['employee_id'] }})">
         Display management hierarchy
     </button>
-    <button type="button" id="sub_button" onclick="performOperation('subalterns_dialog',{{ args['employee_id'] }})">
+    <button type="button" id="sub_button"
+            onclick="performOperation('subalterns_dialog',{{ args['employee_id'] }})">
         Display subordinates
     </button>
-    <button type="button" id="entho_button" onclick="performOperation('entholidays_dialog',{{ args['employee_id'] }})">
+    <button type="button" id="entho_button"
+            onclick="performOperation('entholidays_dialog',{{ args['employee_id'] }})">
         Change entitlement to holidays
     </button>
-    <button type="button" id="absence_button" onclick="performOperation('holidays_dialog',{{ args['employee_id'] }})">
+    <button type="button" id="absence_button"
+            onclick="performOperation('holidays_dialog',{{ args['employee_id'] }})">
         Enter absence
     </button>
-    <button type="button" id="jobhis_button" onclick="performOperation('job_history_dialog',{{ args['employee_id'] }})">
+    <button type="button" id="jobhis_button"
+            onclick="performOperation('job_history_dialog',{{ args['employee_id'] }})">
         View Job History
     </button>
-    <button type="button" id="alldep_button" onclick="performOperation('all_departments_dialog')">Edit Departments
+    <button type="button" id="alldep_button"
+            onclick="performOperation('all_departments_dialog')">
+        Edit Departments
     </button>
-    <button type="button" id="alljob_button" onclick="performOperation('all_jobs_dialog')">Edit Jobs</button>
+    <button type="button" id="alljob_button"
+            onclick="performOperation('all_jobs_dialog')">
+        Edit Jobs
+    </button>
 </div>

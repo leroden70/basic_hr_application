@@ -970,12 +970,17 @@ class EmployeePostgresConnector(PostgresConnector):
         self.disconnect()
 
     def update_new_holidays(self, employee_id: int, absence_type: str, start_date: date,
-                         estimated_end_date: date, country_id: str):
-        sql = [""] * 5
-        values = [""] * 5
+                         estimated_end_date: date, end_date: date, country_id: str):
+        sql = [""] * 4
+        values = [""] * 4
         best_end_date = end_date or estimated_end_date
-        workdays = self.workdays(start_date, best_end_date, country_id)
-        bankholidays = self.bankholidays(start_date, best_end_date, country_id)
+        stdt = min(estimated_end_date, end_date)
+        endt = max(estimated_end_date, end_date)
+        workdays = self.workdays(stdt, endt, country_id)
+        bankholidays = self.bankholidays(stdt, endt, country_id)
+        if end_date < estimated_end_date:
+            workdays = -workdays
+            bankholidays = -bankholidays
         sql[0] = """
     		SELECT * 
     		  FROM dbo.absences
@@ -983,17 +988,16 @@ class EmployeePostgresConnector(PostgresConnector):
     		   AND absence_type = %s
     		   AND start_date = %s
         """
-        values[0] = (employee_id, absence_type, start_date, estimated_end_date, start_date, estimated_end_date)
+        values[0] = (employee_id, absence_type, start_date)
         sql[1] = """
             UPDATE dbo.absences 
-               SET start_date = %s,
-                   estimated_end_date = %s
+               SET end_date = %s
              WHERE employee_id = %s
     		   AND absence_type = %s
     		   AND start_date = %s
             RETURNING employee_id, absence_type, start_date, estimated_end_date
         """
-        values[1] = (employee_id, absence_type, start_date, estimated_end_date)
+        values[1] = (end_date, employee_id, absence_type, start_date)
         sql[2] = """
             UPDATE dbo.emp_holidays
                SET balance = balance - %s
@@ -1002,16 +1006,8 @@ class EmployeePostgresConnector(PostgresConnector):
                AND %s BETWEEN start_date AND end_date
              RETURNING employee_id, absence_type, start_date, end_date, balance
         """
-        values[2] = (workdays, employee_id, absence_type, start_date)
+        values[2] = (workdays, employee_id, absence_type, end_date)
         sql[3] = """
-            SELECT employee_id
-               FROM dbo.emp_holidays
-             WHERE employee_id = %s
-               AND absence_type = 'PUBL'
-               AND %s BETWEEN start_date AND end_date
-        """
-        values[3] = (employee_id, start_date)
-        sql[4] = """
             UPDATE dbo.emp_holidays
                SET balance = balance - %s
              WHERE employee_id = %s
@@ -1019,38 +1015,35 @@ class EmployeePostgresConnector(PostgresConnector):
                AND %s BETWEEN start_date AND end_date
              RETURNING employee_id, absence_type, start_date, end_date, balance 
         """
-        values[4] = (bankholidays, employee_id, start_date)
+        values[3] = (bankholidays, employee_id, end_date)
 
         self.connection = psycopg2.connect(**self.config)
         try:
             with (self.connection.cursor(cursor_factory=DictCursor) as cursor0,
                   self.connection.cursor(cursor_factory=DictCursor) as cursor1,
                   self.connection.cursor(cursor_factory=DictCursor) as cursor2,
-                  self.connection.cursor(cursor_factory=DictCursor) as cursor3,
-                  self.connection.cursor(cursor_factory=DictCursor) as cursor4):
+                  self.connection.cursor(cursor_factory=DictCursor) as cursor3):
                 ###############################################  SQL 0  ##############################
                 cursor0.execute(sql[0], values[0])
                 employee_abs_data = [dict(row) for row in cursor0.fetchall()]
-                if employee_abs_data:
-                    raise Exception("An absence of this type already exists at theses dates")
+                if not employee_abs_data:
+                    raise Exception("The absence does not exist")
                 else:
                     ###############################################  SQL 1  ##########################
                     cursor1.execute(sql[1], values[1])
                     employee_abs_data = [dict(row) for row in cursor1.fetchall()]
                     if not employee_abs_data:
-                        raise Exception("Impossible to insert the new absence")
+                        raise Exception("Impossible to update the absence")
                     ###############################################  SQL 2  ##########################
-                    cursor2.execute(sql[2], values[2])
-                    employee_entholidays = [dict(row) for row in cursor2.fetchall()]
-                    if not employee_entholidays:
-                        raise Exception(f"Cannot update the balance of holidays")
-                    ###############################################  SQL 3  ##########################
-                    cursor3.execute(sql[3], values[3])
-                    employee_pubholidays = [dict(row) for row in cursor3.fetchall()]
-                    if employee_pubholidays:
-                        ###############################################  SQL 4  ######################
-                        cursor4.execute(sql[4], values[4])
-                        employee_pubholidays = [dict(row) for row in cursor4.fetchall()]
+                    if workdays != 0:
+                        cursor2.execute(sql[2], values[2])
+                        employee_entholidays = [dict(row) for row in cursor2.fetchall()]
+                        if not employee_entholidays:
+                            raise Exception(f"Cannot update the balance of holidays")
+                        ###############################################  SQL 3  ##########################
+                    if bankholidays != 0:
+                        cursor3.execute(sql[3], values[3])
+                        employee_pubholidays = [dict(row) for row in cursor3.fetchall()]
                         if not employee_pubholidays:
                             raise Exception(f"Cannot update the balance of holidays")
         except Exception as e:

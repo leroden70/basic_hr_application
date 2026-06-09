@@ -759,7 +759,7 @@ def update_new_holiday_dialog():
         current_year = date.today().year
         legal_year = current_year
         err_msg = ""
-        info_msg = "New holidays added"
+        info_msg = "Holidays updated"
         return render_template('partials/holidays_dialog.html',
                                name=name,
                                employee_id=employee_id,

@@ -41,11 +41,6 @@
                         <td>
                             {% if (holiday['end_date']) %}
                                 {{ holiday['end_date'] }}
-                            {% else %}
-                                <button type="button" id="modify_enddate_holiday_button"
-                                        onclick="performOperation('update_enddate_holiday_dialog',{{ employee_id }})">
-                                    Actual end date
-                                </button>
                             {% endif %}
                         </td>
                         <td class="buttonforms">

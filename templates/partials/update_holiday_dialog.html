@@ -1,0 +1,43 @@
+<div id="update_holiday_dialog">
+    <div id="opHeader">
+        <h2 id="opModalTitle">Update Holiday for {{ name }}</h2>
+        <div id="opCloseModal" onclick="closeOpModal()">&Cross;</div>
+    </div>
+    <form
+        id="upd_new_abs_form"
+        hx-post="{{ url_for('get_holidays_dialog') }}"
+        hx-target="#holidays_dialog"
+        hx-swap="outerHTML"
+    >
+        <input type="hidden" name="employee_id" id="employee_id" value="{{ employee_id }}">
+        <div>
+            <input type="hidden" name="absence_type" id="absence_type" value="{{ absence_type }}">
+            <span>Absence type : {{ absence_description }}</span>
+        </div>
+        <div>
+            <input type="hidden" id="start_date" name="start_date" value="{{ start_date }}">
+            <span class="abs">Start date : {{ start_date }}</span>
+        </div>
+        <div>
+            <label for="end_date" class="abs">End date (estimated) :</label>
+            <input type="date" id="estimated_end_date" name="estimated_end_date" value="{{ estimated_end_date }}">
+        </div>
+        <div>
+            <label for="end_date" class="abs">End date :</label>
+            <input type="date" id="end_date" name="end_date" value="{% if end_date  %}{{ end_date }}{% endif %}">
+            <button type="button" onclick="document.getElementById('end_date').value = document.getElementById('estimated_end_date').value">
+                Set as estimated end date
+            </button>
+        </div>
+        <div>
+            <button type="submit" name="action_button"
+                    value="upd_abs_submit_button" id="upd_abs_submit_button">
+                Submit absence
+            </button>
+            <button type="button" id="cancel_button"
+                    onclick="closeOpModal()">
+                Cancel
+            </button>
+        </div>
+    </form>
+</div>

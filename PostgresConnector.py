@@ -31,7 +31,6 @@ class PostgresConnector:
         """
         try:
             self.connection = psycopg2.connect(**self.config)
-            self.cursor = self.connection.cursor(cursor_factory=DictCursor)
             print("Connexion to PostgreSQL succeeded.")
             return True
         except OperationalError as e:
@@ -40,43 +39,97 @@ class PostgresConnector:
 
     def disconnect(self):
         """
-        Close connexion and cursor if exist.
+        Close connexion if exists.
         """
-        if self.cursor:
-            self.cursor.close()
         if self.connection:
             self.connection.close()
         print("PostgreSQL disconnexion succeeded.")
 
     def execute_query(self, query, params=None, fetch=False, autocommit=True):
         """
-        Executes SQL query.
+        Executes SQL query using a local cursor to support multiple statements in one transaction.
         Args:
             query (str): SQL query to execute.
             params (tuple, optional): Parameters for the query (to avoid SQL injections).
             fetch (bool): If True, gets the query results.
+            autocommit (bool): If True, commits the transaction immediately.
 
         Returns:
-            list: query results if  fetch=True, else None.
+            list: query results if fetch=True, else None.
         """
         if not self.connection or self.connection.closed:
             print("Error : No active connexion.")
             return None
-        result = ""
+        result = None
 
-        try:
-            self.cursor.execute(query, params)
-            if fetch:
-                result = [dict(row) for row in self.cursor.fetchall()]
-            if autocommit == True:
-                self.connection.commit()
-            print("Query executed successfully.")
-            return result
-        except Error as e:
-            if autocommit == True:
-                self.connection.rollback()
-            # print(f"Error while executing query : {e}")
-            raise e
+        # Un curseur local tout neuf est créé pour CHAQUE requête
+        with self.connection.cursor(cursor_factory=DictCursor) as local_cursor:
+            try:
+                local_cursor.execute(query, params)
+                if fetch:
+                    result = [dict(row) for row in local_cursor.fetchall()]
+                if autocommit:
+                    self.connection.commit()
+                print("Query executed successfully.")
+                return result
+            except Error as e:
+                if autocommit:
+                    self.connection.rollback()
+                raise e
+
+    # def connect(self):
+    #     """
+    #     Connexion to PostgreSQL DB.
+    #     Returns:
+    #         bool: True if connexion succeeds, else False.
+    #     """
+    #     try:
+    #         self.connection = psycopg2.connect(**self.config)
+    #         self.cursor = self.connection.cursor(cursor_factory=DictCursor)
+    #         print("Connexion to PostgreSQL succeeded.")
+    #         return True
+    #     except OperationalError as e:
+    #         print(f"PostgreSQL connexion error : {e}")
+    #         return False
+    #
+    # def disconnect(self):
+    #     """
+    #     Close connexion and cursor if exist.
+    #     """
+    #     if self.cursor:
+    #         self.cursor.close()
+    #     if self.connection:
+    #         self.connection.close()
+    #     print("PostgreSQL disconnexion succeeded.")
+    #
+    # def execute_query(self, query, params=None, fetch=False, autocommit=True):
+    #     """
+    #     Executes SQL query.
+    #     Args:
+    #         query (str): SQL query to execute.
+    #         params (tuple, optional): Parameters for the query (to avoid SQL injections).
+    #         fetch (bool): If True, gets the query results.
+    #
+    #     Returns:
+    #         list: query results if  fetch=True, else None.
+    #     """
+    #     if not self.connection or self.connection.closed:
+    #         print("Error : No active connexion.")
+    #         return None
+    #     result = ""
+    #     try:
+    #         self.cursor.execute(query, params)
+    #         if fetch:
+    #             result = [dict(row) for row in self.cursor.fetchall()]
+    #         if autocommit == True:
+    #             self.connection.commit()
+    #         print("Query executed successfully.")
+    #         return result
+    #     except Error as e:
+    #         if autocommit == True:
+    #             self.connection.rollback()
+    #         # print(f"Error while executing query : {e}")
+    #         raise e
 
     def __enter__(self):
         """to use the class with a bloc 'with'."""
@@ -115,6 +168,7 @@ class EmployeePostgresConnector(PostgresConnector):
                        d.department_name,
                        l.city,
                        l.state_province,
+                       c.country_id,
                        c.country_name,
                        r.region_name,
                        e.employee_id,
@@ -365,7 +419,7 @@ class EmployeePostgresConnector(PostgresConnector):
                   FROM dbo.job_history jh
                  WHERE jh.employee_id = %s
                 ORDER BY jh.start_date desc;
-                """, (cur_employee_id,), True, False)
+                """, (cur_employee_id,), True, True)
             if not employee_job_data:
                 try:
                     self.execute_query("""
@@ -373,7 +427,7 @@ class EmployeePostgresConnector(PostgresConnector):
                                                     department_id)
                        VALUES (%s, %s, CURRENT_DATE - 1, %s, %s);
                     """, (cur_employee_id, cur_hire_date, cur_job_id, cur_department_id)
-                                       , False, False)
+                                       , False, True)
                 except Exception as e:
                     self.connection.rollback()
                     print(f"Error executing query: {e}")
@@ -390,7 +444,7 @@ class EmployeePostgresConnector(PostgresConnector):
                                 %s, %s , CURRENT_DATE - 1, %s, %s
                             );
                         """, (cur_employee_id, start_date, cur_job_id, cur_department_id),
-                                           False, False)
+                                           False, True)
                     except Exception as e:
                         self.connection.rollback()
                         print(f"Error executing query: {e}")
@@ -400,7 +454,7 @@ class EmployeePostgresConnector(PostgresConnector):
                     UPDATE dbo.employees
                        SET job_id = %s
                      WHERE employee_id = %s
-                 """, (new_job_id, cur_employee_id), False, False)
+                 """, (new_job_id, cur_employee_id), False, True)
             except Exception as e:
                 self.connection.rollback()
                 print(f"Error executing query: {e}")
@@ -420,7 +474,7 @@ class EmployeePostgresConnector(PostgresConnector):
                   FROM dbo.job_history jh
                  WHERE jh.employee_id = %s
                 ORDER BY jh.start_date desc;
-                """, (cur_employee_id,), True, False)
+                """, (cur_employee_id,), True, True)
             if not employee_dept_data:
                 try:
                     self.execute_query("""
@@ -428,7 +482,7 @@ class EmployeePostgresConnector(PostgresConnector):
                                                     department_id)
                        VALUES (%s, %s, CURRENT_DATE - 1, %s, %s);
                     """, (cur_employee_id, cur_hire_date, cur_job_id, cur_department_id)
-                                       , False, False)
+                                       , False, True)
                 except Exception as e:
                     self.connection.rollback()
                     print(f"Error executing query: {e}")
@@ -445,7 +499,7 @@ class EmployeePostgresConnector(PostgresConnector):
                                 %s, %s , CURRENT_DATE - 1, %s, %s
                             );
                         """, (cur_employee_id, start_date, cur_job_id, cur_department_id),
-                                           False, False)
+                                           False, True)
                     except Exception as e:
                         self.connection.rollback()
                         print(f"Error executing query: {e}")
@@ -455,7 +509,7 @@ class EmployeePostgresConnector(PostgresConnector):
                     UPDATE dbo.employees
                        SET department_id = %s
                      WHERE employee_id = %s
-                 """, (new_department_id, cur_employee_id), False, False)
+                 """, (new_department_id, cur_employee_id), False, True)
             except Exception as e:
                 self.connection.rollback()
                 print(f"Error executing query: {e}")
@@ -509,11 +563,11 @@ class EmployeePostgresConnector(PostgresConnector):
                        eh.end_date,
                        eh.entitlement,
                        eh.balance
-                  FROM emp_holidays eh
+                  FROM dbo.emp_holidays eh
                  WHERE eh.employee_id = %s
                    AND eh.absence_type = %s
                    AND CURRENT_DATE BETWEEN eh.start_date AND eh.end_date
-           """, (employee_id, absence_type), True, False)
+           """, (employee_id, absence_type), True, True)
             if employee_enthol_data:
                 try:
                     if entitlement == employee_enthol_data[0]["entitlement"]:
@@ -522,7 +576,7 @@ class EmployeePostgresConnector(PostgresConnector):
                         if employee_enthol_data[0]["start_date"] == date(date.today().year, 1, 1):
                             try:
                                 update_eh_data = self.execute_query("""
-                                    UPDATE emp_holidays
+                                    UPDATE dbo.emp_holidays
                                        SET entitlement = %s
                                      WHERE employee_id = %s
                                        AND absence_type = %s
@@ -531,7 +585,7 @@ class EmployeePostgresConnector(PostgresConnector):
                                 """, (entitlement,
                                       employee_id,
                                       absence_type,
-                                      employee_enthol_data[0]["start_date"]), True, False)
+                                      employee_enthol_data[0]["start_date"]), True, True)
                                 if not update_eh_data:
                                     raise Exception(f"Error updating entitlement: {entitlement} for employee {employee_id}, absence type {absence_type}, start date {employee_enthol_data[0]['start_date']}")
                             except Exception as e:
@@ -539,7 +593,7 @@ class EmployeePostgresConnector(PostgresConnector):
                         else:
                             try:
                                 update_eh_data = self.execute_query("""
-                                    UPDATE emp_holidays
+                                    UPDATE dbo.emp_holidays
                                        SET end_date = %s
                                      WHERE employee_id = %s
                                        AND absence_type = %s
@@ -548,11 +602,11 @@ class EmployeePostgresConnector(PostgresConnector):
                                 """, (date(date.today().year - 1, 12, 31),
                                       employee_id,
                                       absence_type,
-                                      employee_enthol_data[0]["start_date"]), True, False)
+                                      employee_enthol_data[0]["start_date"]), True, True)
                                 if not update_eh_data:
                                     raise Exception(f"Error updating end_date: {date(date.today().year - 1, 12, 31)} for employee {employee_id}, absence type {absence_type}, start date {employee_enthol_data[0]['start_date']}")
                                 insert_eh_data = self.execute_query("""
-                                    INSERT INTO emp_holidays (
+                                    INSERT INTO dbo.emp_holidays (
                                         employee_id, absence_type, start_date, end_date, entitlement, balance
                                     ) VALUES (
                                         %s, %s, %s, '9999-12-31', %s, %s
@@ -562,7 +616,7 @@ class EmployeePostgresConnector(PostgresConnector):
                                       absence_type,
                                       date(date.today().year, 1, 1),
                                       entitlement,
-                                      employee_enthol_data[0]["balance"]), True, False)
+                                      employee_enthol_data[0]["balance"]), True, True)
                                 if not update_eh_data:
                                     raise Exception(f"Error inserting data for employee {employee_id}, absence type {absence_type}, start date {date(date.today().year, 1, 1)}")
                             except Exception as e:
@@ -574,7 +628,7 @@ class EmployeePostgresConnector(PostgresConnector):
             else:
                 try:
                     insert_eh_data = self.execute_query("""
-                        INSERT INTO emp_holidays (
+                        INSERT INTO dbo.emp_holidays (
                             employee_id, absence_type, start_date, end_date, entitlement, balance
                         ) VALUES (
                             %s, %s, %s, '9999-12-31', %s, %s
@@ -584,7 +638,7 @@ class EmployeePostgresConnector(PostgresConnector):
                           absence_type,
                           date(date.today().year, 1, 1),
                           entitlement,
-                          entitlement), True, False)
+                          entitlement), True, True)
                     if not insert_eh_data:
                         raise Exception(
                             f"Error inserting data for employee {employee_id}, absence type {absence_type}, start date {date(date.today().year, 1, 1)}")
@@ -624,11 +678,11 @@ class EmployeePostgresConnector(PostgresConnector):
                        eh.end_date,
                        eh.entitlement,
                        eh.balance
-                  FROM emp_holidays eh
+                  FROM dbo.emp_holidays eh
                  WHERE eh.employee_id = %s
                    AND eh.absence_type = %s
                    AND CURRENT_DATE BETWEEN eh.start_date AND eh.end_date
-           """, (employee_id, absence_type), True, False)
+           """, (employee_id, absence_type), True, True)
             if employee_enthol_data:
                 try:
                     if entitlement == employee_enthol_data[0]["entitlement"]:
@@ -649,7 +703,7 @@ class EmployeePostgresConnector(PostgresConnector):
                                       balance,
                                       employee_id,
                                       absence_type,
-                                      employee_enthol_data[0]["start_date"]), True, False)
+                                      employee_enthol_data[0]["start_date"]), True, True)
                                 if not update_eh_data:
                                     raise Exception(f"Error updating entitlement: {entitlement} for employee {employee_id}, absence type {absence_type}, start date {employee_enthol_data[0]['start_date']}")
                             except Exception as e:
@@ -666,7 +720,7 @@ class EmployeePostgresConnector(PostgresConnector):
                                 """, (date(date.today().year - 1, 12, 31),
                                       employee_id,
                                       absence_type,
-                                      employee_enthol_data[0]["start_date"]), True, False)
+                                      employee_enthol_data[0]["start_date"]), True, True)
                                 if not update_eh_data:
                                     raise Exception(f"Error updating end_date: {date(date.today().year - 1, 12, 31)} for employee {employee_id}, absence type {absence_type}, start date {employee_enthol_data[0]['start_date']}")
                                 insert_eh_data = self.execute_query("""
@@ -702,7 +756,7 @@ class EmployeePostgresConnector(PostgresConnector):
                           absence_type,
                           date(date.today().year, 1, 1),
                           entitlement,
-                          entitlement), True, False)
+                          entitlement), True, True)
                     if not insert_eh_data:
                         raise Exception(
                             f"Error inserting data for employee {employee_id}, absence type {absence_type}, start date {date(date.today().year, 1, 1)}")
@@ -726,7 +780,7 @@ class EmployeePostgresConnector(PostgresConnector):
                  WHERE employee_id = %s
                    AND CURRENT_DATE BETWEEN start_date AND end_date
                    AND absence_type = %s
-            """, (employee_id, absence_type), True, False)
+            """, (employee_id, absence_type), True, True)
             if employee_enthol_data:
                 try:
                     if employee_enthol_data[0]["start_date"] == date(date.today().year, 1, 1):
@@ -738,7 +792,7 @@ class EmployeePostgresConnector(PostgresConnector):
                             RETURNING employee_id
                         """, (employee_id,
                               absence_type,
-                              employee_enthol_data[0]["start_date"]), True, False)
+                              employee_enthol_data[0]["start_date"]), True, True)
                         if not delete_eh_data:
                             raise Exception(f"Error deleting entitlement for employee {employee_id}, absence type {absence_type}, start date {employee_enthol_data[0]['start_date']}")
                     else:
@@ -752,7 +806,7 @@ class EmployeePostgresConnector(PostgresConnector):
                         """, (date(date.today().year - 1, 12, 31),
                               employee_id,
                               absence_type,
-                              employee_enthol_data[0]["start_date"]), True, False)
+                              employee_enthol_data[0]["start_date"]), True, True)
                         if not update_eh_data:
                             raise Exception(f"Error updating entitlement for employee {employee_id}, absence type {absence_type}, start date {employee_enthol_data[0]['start_date']}")
                 except Exception as e:
@@ -767,67 +821,89 @@ class EmployeePostgresConnector(PostgresConnector):
         self.connection.commit()
         self.disconnect()
 
-    def add_new_holidays(self, employee_id: int, absence_type: str, start_date: date, estimated_end_date: date):
-        self.connect()
+    def add_new_holidays(self, employee_id: int, absence_type: str, start_date: date,
+                         estimated_end_date: date, country_id: str):
+        sql = [""] * 5
+        values = [""] * 5
+        workdays = self.workdays(start_date, estimated_end_date, country_id)
+        bankholidays = self.bankholidays(start_date, estimated_end_date, country_id)
+        sql[0] = """
+    		SELECT * 
+    		  FROM dbo.absences
+    		 WHERE employee_id = %s
+    		   AND absence_type = %s
+    		   AND (   start_date between %s and %s
+    		        OR end_date between %s and %s)
+        """
+        values[0] = (employee_id, absence_type, start_date, estimated_end_date, start_date, estimated_end_date)
+        sql[1] = """
+            INSERT INTO dbo.absences (
+                employee_id, absence_type, start_date, estimated_end_date
+            ) VALUES (
+                %s, %s, %s, %s
+            )
+            returning employee_id, absence_type, start_date, estimated_end_date
+        """
+        values[1] = (employee_id, absence_type, start_date, estimated_end_date)
+        sql[2] = """
+            UPDATE dbo.emp_holidays
+               SET balance = balance - %s
+             WHERE employee_id = %s
+               AND absence_type = %s
+               AND %s BETWEEN start_date AND end_date
+             RETURNING employee_id, absence_type, start_date, end_date, balance
+        """
+        values[2] = (workdays, employee_id, absence_type, start_date)
+        sql[3] = """
+            SELECT employee_id
+               FROM dbo.emp_holidays
+             WHERE employee_id = %s
+               AND absence_type = 'PUBL'
+               AND %s BETWEEN start_date AND end_date
+        """
+        values[3] = (employee_id, start_date)
+        sql[4] = """
+            UPDATE dbo.emp_holidays
+               SET balance = balance - %s
+             WHERE employee_id = %s
+               AND absence_type = 'PUBL'
+               AND %s BETWEEN start_date AND end_date
+             RETURNING employee_id, absence_type, start_date, end_date, balance 
+        """
+        values[4] = (bankholidays, employee_id, start_date)
+
+        self.connection = psycopg2.connect(**self.config)
         try:
-            employee_abs_data = self.execute_query("""
-                SELECT * 
-                  FROM absences
-                 WHERE employee_id = %s
-                   AND absence_type = %s
-                   AND (   start_date between %s and %s
-                        OR end_date between %s and %s)
-           """, (employee_id,
-                 absence_type,
-                 start_date, estimated_end_date,
-                 start_date, estimated_end_date
-                 ), True, False)
-            if employee_abs_data:
-                raise Exception("An absence of this type already exists at theses dates")
-            else:
-                employee_abs_data = self.execute_query("""
-                    INSERT INTO absences (
-                        employee_id, absence_type, start_date, estimated_end_date
-                    ) VALUES (
-                        %s, %s, %s, %s
-                    )
-                    returning employee_id 
-                """, (employee_id,
-                      absence_type,
-                      start_date,
-                      estimated_end_date
-                 ), True, False)
-                if not employee_abs_data:
-                    raise Exception("Impossible to insert the new absence")
-                workdays = self.workdays(start_date, estimated_end_date)
-                employee_entholidays = self.execute_query("""
-                    UPDATE emp_holidays
-                       SET balance = balance - %s
-                     WHERE employee_id = %s
-                       AND absence_type = %s
-                       AND %s BETWEEN start_date AND end_date
-                     RETURNING employee_id 
-                    """, (workdays,
-                          employee_id,
-                          absence_type,
-                          start_date), True, False)
-                if not employee_entholidays:
-                    raise Exception(f"Cannot update the balance of holidays")
-                bankholidays = self.bankholidays(start_date, estimated_end_date)
-                employee_pubholidays = self.execute_query("""
-                    UPDATE emp_holidays
-                       SET balance = balance - %s
-                     WHERE employee_id = %s
-                       AND absence_type = 'PUBL'
-                       AND %s BETWEEN start_date AND end_date
-                     RETURNING employee_id 
-                    """, (bankholidays,
-                          employee_id,
-                          start_date), True, False)
-                if not employee_pubholidays:
-                    raise Exception(f"Cannot update the balance of holidays")
-        except ValueError as e:
-            raise e
+            with (self.connection.cursor(cursor_factory=DictCursor) as cursor0,
+                  self.connection.cursor(cursor_factory=DictCursor) as cursor1,
+                  self.connection.cursor(cursor_factory=DictCursor) as cursor2,
+                  self.connection.cursor(cursor_factory=DictCursor) as cursor3,
+                  self.connection.cursor(cursor_factory=DictCursor) as cursor4):
+                ###############################################  SQL 0  ##############################
+                cursor0.execute(sql[0], values[0])
+                employee_abs_data = [dict(row) for row in cursor0.fetchall()]
+                if employee_abs_data:
+                    raise Exception("An absence of this type already exists at theses dates")
+                else:
+                    ###############################################  SQL 1  ##########################
+                    cursor1.execute(sql[1], values[1])
+                    employee_abs_data = [dict(row) for row in cursor1.fetchall()]
+                    if not employee_abs_data:
+                        raise Exception("Impossible to insert the new absence")
+                    ###############################################  SQL 2  ##########################
+                    cursor2.execute(sql[2], values[2])
+                    employee_entholidays = [dict(row) for row in cursor2.fetchall()]
+                    if not employee_entholidays:
+                        raise Exception(f"Cannot update the balance of holidays")
+                    ###############################################  SQL 3  ##########################
+                    cursor3.execute(sql[3], values[3])
+                    employee_pubholidays = [dict(row) for row in cursor3.fetchall()]
+                    if employee_pubholidays:
+                        ###############################################  SQL 4  ######################
+                        cursor4.execute(sql[4], values[4])
+                        employee_pubholidays = [dict(row) for row in cursor4.fetchall()]
+                        if not employee_pubholidays:
+                            raise Exception(f"Cannot update the balance of holidays")
         except Exception as e:
             self.connection.rollback()
             print(f"Error executing query: {e}")
@@ -835,50 +911,57 @@ class EmployeePostgresConnector(PostgresConnector):
         self.connection.commit()
         self.disconnect()
 
-    def delete_holiday(self, employee_id: int, absence_type: str, start_date: date):
-        self.connect()
+    def delete_holiday(self, employee_id: int, absence_type: str,
+                       start_date: date, country_id: str):
+        sql = [""] * 3
+        values = [""] * 3
+        sql[0] = """
+            DELETE FROM absences 
+             WHERE employee_id = %s
+               AND absence_type = %s
+               AND start_date = %s
+            RETURNING employee_id, estimated_end_date, end_date
+        """
+        sql[1] = """
+            UPDATE emp_holidays
+               set balance = balance + %s 
+             WHERE employee_id = %s
+               AND absence_type = %s
+               AND %s BETWEEN start_date AND end_date
+            RETURNING employee_id 
+        """
+        sql[2] = """
+            UPDATE emp_holidays
+               set balance = balance + %s 
+             WHERE employee_id = %s
+               AND absence_type = 'PUBL'
+               AND %s BETWEEN start_date AND end_date
+            RETURNING employee_id 
+        """
+        self.connection = psycopg2.connect(**self.config)
         try:
-            employee_hol_data = self.execute_query("""
-                DELETE FROM absences 
-                 WHERE employee_id = %s
-                   AND absence_type = %s
-                   AND start_date = %s
-                RETURNING employee_id, estimated_end_date, end_date
-            """, (employee_id,
-                  absence_type,
-                  start_date), True, False)
-            if not employee_hol_data:
-                raise Exception(f"Cannot delete this absence")
-            else:
-                end_date = employee_hol_data[0]["end_date"] or employee_hol_data[0]["estimated_end_date"]
-            workdays = self.workdays(start_date, end_date)
-            employee_enthol_data = self.execute_query("""
-                UPDATE emp_holidays
-                   set balance = balance + %s 
-                 WHERE employee_id = %s
-                   AND absence_type = %s
-                   AND %s BETWEEN start_date AND end_date
-                RETURNING employee_id 
-            """, (workdays,
-                  employee_id,
-                  absence_type,
-                  start_date), True, False)
-            if not employee_enthol_data:
-                raise Exception(f"Cannot update the holidays entitlement balance")
-            bankholidays = self.bankholidays(start_date, end_date)
-            employee_enthol_data = self.execute_query("""
-                UPDATE emp_holidays
-                   set balance = balance + %s 
-                 WHERE employee_id = %s
-                   AND absence_type = 'PUBL'
-                   AND %s BETWEEN start_date AND end_date
-                RETURNING employee_id 
-            """, (bankholidays,
-                  employee_id,
-                  absence_type,
-                  start_date), True, False)
-            if not employee_enthol_data:
-                raise Exception(f"Cannot update the holidays entitlement balance")
+            with (self.connection.cursor(cursor_factory=DictCursor) as cursor0,
+                  self.connection.cursor(cursor_factory=DictCursor) as cursor1,
+                  self.connection.cursor(cursor_factory=DictCursor) as cursor2):
+                values[0] = (employee_id, absence_type, start_date)
+                cursor0.execute(sql[0], values[0])
+                employee_hol_data = [dict(row) for row in cursor0.fetchall()]
+                if not employee_hol_data:
+                    raise Exception(f"Cannot delete this absence")
+                else:
+                    end_date = employee_hol_data[0]["end_date"] or employee_hol_data[0]["estimated_end_date"]
+                workdays = self.workdays(start_date, end_date, country_id)
+                bankholidays = self.bankholidays(start_date, end_date, country_id)
+                values[1] = (workdays, employee_id, absence_type, start_date)
+                cursor1.execute(sql[1], values[1])
+                employee_enthol_data = [dict(row) for row in cursor1.fetchall()]
+                if not employee_enthol_data:
+                    raise Exception(f"Cannot update the holidays entitlement balance")
+                values[2] = (bankholidays, employee_id, start_date)
+                cursor2.execute(sql[2], values[2])
+                employee_enthol_data = [dict(row) for row in cursor2.fetchall()]
+                if not employee_enthol_data:
+                    raise Exception(f"Cannot update the holidays entitlement balance")
         except Exception as e:
             self.connection.rollback()
             print(f"Error executing query: {e}")
@@ -886,7 +969,98 @@ class EmployeePostgresConnector(PostgresConnector):
         self.connection.commit()
         self.disconnect()
 
-    def workdays(self, start_date: date, end_date: date):
+    def update_new_holidays(self, employee_id: int, absence_type: str, start_date: date,
+                         estimated_end_date: date, country_id: str):
+        sql = [""] * 5
+        values = [""] * 5
+        best_end_date = end_date or estimated_end_date
+        workdays = self.workdays(start_date, best_end_date, country_id)
+        bankholidays = self.bankholidays(start_date, best_end_date, country_id)
+        sql[0] = """
+    		SELECT * 
+    		  FROM dbo.absences
+    		 WHERE employee_id = %s
+    		   AND absence_type = %s
+    		   AND start_date = %s
+        """
+        values[0] = (employee_id, absence_type, start_date, estimated_end_date, start_date, estimated_end_date)
+        sql[1] = """
+            UPDATE dbo.absences 
+               SET start_date = %s,
+                   estimated_end_date = %s
+             WHERE employee_id = %s
+    		   AND absence_type = %s
+    		   AND start_date = %s
+            RETURNING employee_id, absence_type, start_date, estimated_end_date
+        """
+        values[1] = (employee_id, absence_type, start_date, estimated_end_date)
+        sql[2] = """
+            UPDATE dbo.emp_holidays
+               SET balance = balance - %s
+             WHERE employee_id = %s
+               AND absence_type = %s
+               AND %s BETWEEN start_date AND end_date
+             RETURNING employee_id, absence_type, start_date, end_date, balance
+        """
+        values[2] = (workdays, employee_id, absence_type, start_date)
+        sql[3] = """
+            SELECT employee_id
+               FROM dbo.emp_holidays
+             WHERE employee_id = %s
+               AND absence_type = 'PUBL'
+               AND %s BETWEEN start_date AND end_date
+        """
+        values[3] = (employee_id, start_date)
+        sql[4] = """
+            UPDATE dbo.emp_holidays
+               SET balance = balance - %s
+             WHERE employee_id = %s
+               AND absence_type = 'PUBL'
+               AND %s BETWEEN start_date AND end_date
+             RETURNING employee_id, absence_type, start_date, end_date, balance 
+        """
+        values[4] = (bankholidays, employee_id, start_date)
+
+        self.connection = psycopg2.connect(**self.config)
+        try:
+            with (self.connection.cursor(cursor_factory=DictCursor) as cursor0,
+                  self.connection.cursor(cursor_factory=DictCursor) as cursor1,
+                  self.connection.cursor(cursor_factory=DictCursor) as cursor2,
+                  self.connection.cursor(cursor_factory=DictCursor) as cursor3,
+                  self.connection.cursor(cursor_factory=DictCursor) as cursor4):
+                ###############################################  SQL 0  ##############################
+                cursor0.execute(sql[0], values[0])
+                employee_abs_data = [dict(row) for row in cursor0.fetchall()]
+                if employee_abs_data:
+                    raise Exception("An absence of this type already exists at theses dates")
+                else:
+                    ###############################################  SQL 1  ##########################
+                    cursor1.execute(sql[1], values[1])
+                    employee_abs_data = [dict(row) for row in cursor1.fetchall()]
+                    if not employee_abs_data:
+                        raise Exception("Impossible to insert the new absence")
+                    ###############################################  SQL 2  ##########################
+                    cursor2.execute(sql[2], values[2])
+                    employee_entholidays = [dict(row) for row in cursor2.fetchall()]
+                    if not employee_entholidays:
+                        raise Exception(f"Cannot update the balance of holidays")
+                    ###############################################  SQL 3  ##########################
+                    cursor3.execute(sql[3], values[3])
+                    employee_pubholidays = [dict(row) for row in cursor3.fetchall()]
+                    if employee_pubholidays:
+                        ###############################################  SQL 4  ######################
+                        cursor4.execute(sql[4], values[4])
+                        employee_pubholidays = [dict(row) for row in cursor4.fetchall()]
+                        if not employee_pubholidays:
+                            raise Exception(f"Cannot update the balance of holidays")
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Error executing query: {e}")
+            raise e
+        self.connection.commit()
+        self.disconnect()
+
+    def workdays(self, start_date: date, end_date: date, country_id: str):
         self.connect()
         try:
             workdays = self.execute_query("""
@@ -904,25 +1078,27 @@ class EmployeePostgresConnector(PostgresConnector):
                                                   OR EXTRACT(DOW FROM weekenddate) = 6
                                               UNION
                                               SELECT holiday_date 
-                                                FROM dbo.public_holidays)
-                """, (start_date, end_date), True, False)
+                                                FROM dbo.public_holidays
+                                               WHERE country_id = %s)
+                """, (start_date, end_date, country_id), True, True)
             return workdays[0]["workdays"]
         except Exception as e:
             raise(e)
 
-    def bankholidays(self, start_date: date, end_date: date):
+    def bankholidays(self, start_date: date, end_date: date, country_id: str):
         self.connect()
         try:
             bankholidays = self.execute_query("""
                 SELECT count(*) as bankholidays
                   FROM (
-                SELECT generate_series('2025-12-23'::date, 
-                                       '2026-01-06'::date, 
+                SELECT generate_series(%s::date, 
+                                       %s::date, 
                                        '1 day'::interval)::date as absdate
                 )
                  WHERE absdate IN (SELECT holiday_date 
-                                     FROM dbo.public_holidays)
-                    """, (start_date, end_date), True, False)
+                                     FROM dbo.public_holidays
+                                    WHERE country_id = %s)
+                    """, (start_date, end_date, country_id), True, True)
             return bankholidays[0]["bankholidays"]
         except Exception as e:
             raise (e)

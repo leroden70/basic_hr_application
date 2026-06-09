@@ -174,15 +174,26 @@ class Employee:
         except Exception as e:
             raise e
 
-    def add_new_holidays(self, absence_type: str, start_date: date, estimated_end_date: date):
+    def add_new_holidays(self, absence_type: str, start_date: date,
+                         estimated_end_date: date, country_id: str):
         try:
-            self.__db_connector.add_new_holidays(self.employee_id, absence_type, start_date, estimated_end_date)
+            self.__db_connector.add_new_holidays(self.employee_id, absence_type,
+                                                 start_date, estimated_end_date, country_id)
         except Exception as e:
             raise e
 
-    def delete_holiday(self, absence_type: str, start_date: date):
+    def delete_holiday(self, absence_type: str, start_date: date, country_id: str):
         try:
-            self.__db_connector.delete_holiday(self.employee_id, absence_type, start_date)
+            self.__db_connector.delete_holiday(self.employee_id, absence_type, start_date, country_id)
+        except Exception as e:
+            raise e
+
+    def update_new_holidays(self, absence_type: str, start_date: date,
+                            estimated_end_date: date, end_date: date, country_id: str):
+        try:
+            self.__db_connector.update_new_holidays(self.employee_id, absence_type,
+                                                    start_date, estimated_end_date,
+                                                    end_date, country_id)
         except Exception as e:
             raise e
 

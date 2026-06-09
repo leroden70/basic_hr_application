@@ -20,6 +20,10 @@ document.addEventListener("submit", async function(e) {
         action = 'add_new_holidays_dialog'
     } else if (e.target.id === "del_abs_form") {
         action = 'delete_holiday_dialog'
+    } else if(e.target.id === "upd_abs_form") {
+        action = 'update_holiday_dialog'
+    } else if(e.target.id === "upd_new_abs_form") {
+        action = 'update_new_holiday_dialog'
     }
     await performOperation(action, arg, true);
     await performOperation('employee_list');

@@ -33,7 +33,7 @@
                     <tr class="holiday_line tr{{ holiday['absence_year'] }}"
                         data-year="{{ holiday['absence_year'] }}">
                         <td>
-                            <input type="hidden" name="row_year" value="">
+                            <input type="hidden" name="row_year" value="{{ holiday['absence_type']  }}">
                             {{ holiday['absence_description'] }}
                         </td>
                         <td>{{ holiday['start_date'] }}</td>
@@ -48,17 +48,30 @@
                                 </button>
                             {% endif %}
                         </td>
-                        <td>
+                        <td class="buttonforms">
+                            <form
+                                id="upd_abs_form"
+                                hx-post="{{ url_for('delete_holiday_dialog') }}"
+                                hx-target="#delete_holiday_dialog"
+                                hx-swap="outerHTML"
+                            >
+                                <input type="hidden" name="employee_id" id="employee_id" value="{{ employee_id }}" />
+                                <input type="hidden" name="absence_type" id="absence_type" value="{{ holiday['absence_type'] }}" />
+                                <input type="hidden" name="absence_description" id="absence_description" value="{{ holiday['absence_description'] }}" />
+                                <input type="hidden" name="start_date" id="start_date" value="{{ holiday['start_date'] }}" />
+                                <input type="hidden" name="estimated_end_date" id="estimated_end_date" value="{{ holiday['estimated_end_date'] }}" />
+                                <input type="hidden" name="end_date" id="end_date" value="{{ holiday['end_date'] }}" />
+                                <button type="submit" name = "upd_action_button" id="modify_holiday_button"
+                                        value="modify_holiday_button">
+                                    Modify
+                                </button>
+                            </form>
                             <form
                                 id="del_abs_form"
                                 hx-post="{{ url_for('delete_holiday_dialog') }}"
                                 hx-target="#delete_holiday_dialog"
                                 hx-swap="outerHTML"
                             >
-                                <button type="button" id="modify_holiday_button"
-                                        onclick="performOperation('update_holiday_dialog',{{ employee_id }})">
-                                    Modify
-                                </button>
                                 <input type="hidden" name="employee_id" id="employee_id" value="{{ employee_id }}" />
                                 <input type="hidden" name="absence_type" id="absence_type" value="{{ holiday['absence_type'] }}" />
                                 <input type="hidden" name="start_date" id="start_date" value="{{ holiday['start_date'] }}" />

@@ -253,3 +253,9 @@ label.abs {
     width: 150px;
     display: inline-block;
 }
+.buttonforms {
+    display: flex;
+}
+#upd_abs_form, #del_abs_from {
+    flex: 1;
+}

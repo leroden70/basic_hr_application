@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from datetime import date
 from flask import Flask, render_template, request, jsonify, make_response
 from flask_cors import CORS
@@ -637,8 +638,11 @@ def add_new_absence_dialog():
     absence_type = data.get('id')[1]
     start_date = data.get('id')[2]
     estimated_end_date = data.get('id')[3]
+    country_id = current_employee.personal_data['country_id']
     try:
-        current_employee.add_new_holidays(absence_type, start_date, estimated_end_date)
+        current_employee.add_new_holidays(absence_type, start_date, estimated_end_date, country_id)
+        company_data.update()
+        current_employee.update(company_data)
         holidays_list = current_employee.act_holidays
         legal_years_list = set([hl['absence_year'] for hl in holidays_list])
         current_year = date.today().year
@@ -667,14 +671,14 @@ def delete_holiday_dialog():
     except ValueError:
         return jsonify({"error": "Employee ID must be an integer"}), 400
 
-
     current_employee = Employee(db_connector, company_data, employee_id)
     current_year = date.today().year
     legal_year = current_year
     absence_type = data.get('id')[1]
     start_date = data.get('id')[2]
+    country_id = current_employee.personal_data['country_id']
     try:
-        current_employee.delete_holiday(absence_type, start_date)
+        current_employee.delete_holiday(absence_type, start_date, country_id)
         try:
             company_data.update()
             current_employee.update(company_data)
@@ -682,7 +686,7 @@ def delete_holiday_dialog():
             holidays_list = current_employee.ent_holidays
             legal_years_list = set([hl['legal_year'] for hl in holidays_list])
             info_msg = f'✅ absence type {absence_type} deleted successfully'
-            return render_template('partials/entholidays_dialog.html',
+            return render_template('partials/holidays_dialog.html',
                                    name=name,
                                    employee_id=employee_id,
                                    holidays_list=holidays_list,
@@ -694,6 +698,79 @@ def delete_holiday_dialog():
             return jsonify({"error": f"Error fetching employee data: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error deleting absence type: {str(e)}"}), 500
+
+@app.route('/update_holiday_dialog', methods=['POST'])
+def update_holiday_dialog():
+    data = request.get_json()
+    if not data or 'id' not in data:
+        return jsonify({"error": "Employee ID is required"}), 400
+
+    try:
+        employee_id = int(data.get('id')[0])
+    except ValueError:
+        return jsonify({"error": "Employee ID must be an integer"}), 400
+
+    current_employee = Employee(db_connector, company_data, employee_id)
+    if not current_employee:
+        return jsonify({"error": f"Employee with ID {employee_id} not found"}), 404
+
+    name = f"{current_employee.personal_data['first_name']} {current_employee.personal_data['last_name']}"
+    absence_type = data.get('id')[1]
+    absence_description = data.get('id')[2]
+    start_date = data.get('id')[3]
+    estimated_end_date = data.get('id')[4]
+    end_date = data.get('id')[5]
+    return render_template('partials/update_holiday_dialog.html',
+                           name=name,
+                           employee_id=employee_id,
+                           absence_type=absence_type,
+                           absence_description=absence_description,
+                           start_date=start_date,
+                           estimated_end_date=estimated_end_date,
+                           end_date=end_date)
+
+@app.route('/update_new_holiday_dialog', methods=['POST'])
+def update_new_holiday_dialog():
+    data = request.get_json()
+    if not data or 'id' not in data:
+        return jsonify({"error": "Employee ID is required"}), 400
+
+    try:
+        employee_id = int(data.get('id')[0])
+    except ValueError:
+        return jsonify({"error": "Employee ID must be an integer"}), 400
+
+    current_employee = Employee(db_connector, company_data, employee_id)
+    if not current_employee:
+        return jsonify({"error": f"Employee with ID {employee_id} not found"}), 404
+
+    name = f"{current_employee.personal_data['first_name']} {current_employee.personal_data['last_name']}"
+    absence_type = data.get('id')[1]
+    start_date = data.get('id')[2]
+    estimated_end_date = data.get('id')[3]
+    end_date = data.get('id')[4]
+    country_id = current_employee.personal_data['country_id']
+    try:
+        current_employee.update_new_holidays(absence_type, start_date, estimated_end_date, end_date, country_id)
+        company_data.update()
+        current_employee.update(company_data)
+        holidays_list = current_employee.act_holidays
+        legal_years_list = set([hl['absence_year'] for hl in holidays_list])
+        current_year = date.today().year
+        legal_year = current_year
+        err_msg = ""
+        info_msg = "New holidays added"
+        return render_template('partials/holidays_dialog.html',
+                               name=name,
+                               employee_id=employee_id,
+                               holidays_list=holidays_list,
+                               legal_years_list=legal_years_list,
+                               current_year=current_year,
+                               legal_year=legal_year,
+                               err_msg=err_msg,
+                               info_msg=info_msg)
+    except Exception as e:
+        return jsonify({"error": f"Error fetching employee data: {str(e)}"}), 500
 
 @app.route('/job_history_dialog', methods=['POST'])
 def get_job_history_dialog():

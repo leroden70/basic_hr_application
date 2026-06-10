@@ -61,9 +61,7 @@
                                 <input type="hidden" name="estimated_end_date" id="estimated_end_date"
                                        value="{{ holiday['estimated_end_date'] }}" />
                                 <input type="hidden" name="end_date" id="end_date"
-                                       value="{% if holiday['end_date'] %}
-                                                    {{ holiday['end_date'] }}
-                                              {% endif %}" />
+                                       value="{% if holiday['end_date'] %}{{ holiday['end_date'] }}{% endif %}" />
                                 <button type="submit" name = "upd_action_button" id="modify_holiday_button"
                                         value="modify_holiday_button">
                                     Modify

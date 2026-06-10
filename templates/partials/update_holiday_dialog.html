@@ -16,10 +16,10 @@
         </div>
         <div>
             <input type="hidden" id="start_date" name="start_date" value="{{ start_date }}">
-            <span class="abs">Start date : {{ start_date.strftime('%d/%m/%Y') }}</span>
+            <span class="abs">Start date : </span><span>{{ start_date.strftime('%d/%m/%Y') }}</span>
         </div>
         <div>
-            <span class="abs">End date (estimated) : {{ estimated_end_date.strftime('%d/%m/%Y') }}</span>
+            <span class="abs">End date (estimated) : </span><span>{{ estimated_end_date.strftime('%d/%m/%Y') }}</span>
             <input type="hidden" id="estimated_end_date" name="estimated_end_date" value="{{ estimated_end_date }}">
         </div>
         <div>

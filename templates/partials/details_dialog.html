@@ -38,6 +38,11 @@
             onclick="performOperation('subalterns_dialog',{{ args['employee_id'] }})">
         Display subordinates
     </button>
+    <button type="button" id="jobhis_button"
+            onclick="performOperation('job_history_dialog',{{ args['employee_id'] }})">
+        View Job History
+    </button>
+    <div>&nbsp</div>
     <button type="button" id="entho_button"
             onclick="performOperation('entholidays_dialog',{{ args['employee_id'] }})">
         Change entitlement to holidays
@@ -46,10 +51,7 @@
             onclick="performOperation('holidays_dialog',{{ args['employee_id'] }})">
         Enter absence
     </button>
-    <button type="button" id="jobhis_button"
-            onclick="performOperation('job_history_dialog',{{ args['employee_id'] }})">
-        View Job History
-    </button>
+    <div>&nbsp</div>
     <button type="button" id="alldep_button"
             onclick="performOperation('all_departments_dialog')">
         Edit Departments

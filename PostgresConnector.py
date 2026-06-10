@@ -976,8 +976,12 @@ class EmployeePostgresConnector(PostgresConnector):
         best_end_date = end_date or estimated_end_date
         stdt = min(estimated_end_date, end_date)
         endt = max(estimated_end_date, end_date)
-        workdays = self.workdays(stdt, endt, country_id)
-        bankholidays = self.bankholidays(stdt, endt, country_id)
+        if stdt == endt:
+            workdays = 0
+            bankholidays = 0
+        else:
+            workdays = self.workdays(stdt, endt, country_id)
+            bankholidays = self.bankholidays(stdt, endt, country_id)
         if end_date < estimated_end_date:
             workdays = -workdays
             bankholidays = -bankholidays

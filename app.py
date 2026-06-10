@@ -2,7 +2,7 @@
 from datetime import date
 from flask import Flask, render_template, request, jsonify, make_response
 from flask_cors import CORS
-from config import config
+from static.config.config import config
 from PostgresConnector import EmployeePostgresConnector
 from Employee import CompanyData, Employee
 
@@ -717,9 +717,13 @@ def update_holiday_dialog():
     name = f"{current_employee.personal_data['first_name']} {current_employee.personal_data['last_name']}"
     absence_type = data.get('id')[1]
     absence_description = data.get('id')[2]
-    start_date = data.get('id')[3]
-    estimated_end_date = data.get('id')[4]
-    end_date = data.get('id')[5]
+    start_date = date.fromisoformat(data.get('id')[3])
+    estimated_end_date = date.fromisoformat(data.get('id')[4])
+    if data.get('id')[5]:
+        end_date = date.fromisoformat(data.get('id')[5])
+    else:
+        end_date = None
+    # country_id = current_employee.personal_data['country_id']
     return render_template('partials/update_holiday_dialog.html',
                            name=name,
                            employee_id=employee_id,

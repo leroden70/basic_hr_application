@@ -70,3 +70,37 @@ Job, Department and Salary
 - `Edit Departments` *not implemented yet* 
 - `Edit Jobs` *not implemented yet*
 ---
+
+## Dialogs :
+### Change Job
+A new job can be chosen from a drop down list. 
+If the job is not changed a message is displayed.
+If the job is changed, a new entry is added to the table `job_history`.
+
+### Change Department
+A new department can be chosen from a drop down list. 
+If the department is not changed a message is displayed.
+If the department is changed, a new entry is added to the table `job_history`.
+
+### Change Salary
+The salary entered must be numeric and the value must be between a minimum anx a maximum defined a the job level.
+
+### Display management hierarchy
+Displays the management chain above the employee.
+
+### Display subordinates
+Displays the management chain below the employee.
+
+### View Job History
+Displays all the job history since hire.
+
+### Change entitlement to holidays
+Each employee has some right to holidays. This can be registered here.
+For each absence type is displayed the entitlement and the balance of absences. 
+
+### Enter absence
+For each absence an absence type can be chosen from a dropdown list, a start date and an estimated end date.
+Later on the absence can be changed to set the actual end date of it.
+A new absence updates the balance in the entitlement table.
+
+![Alt text](static/images/HR_datamodel.png?raw=true "Title")

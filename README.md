@@ -67,8 +67,8 @@ Job, Department and Salary
 - `Enter absence`
 
 **General actions about the company**
-- `Edit Departments` *not implemented yet* 
-- `Edit Jobs` *not implemented yet*
+- `Edit Departments` *not yet implemented* 
+- `Edit Jobs` *not yet implemented*
 ---
 
 ## Dialogs :

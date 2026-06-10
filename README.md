@@ -103,4 +103,4 @@ For each absence an absence type can be chosen from a dropdown list, a start dat
 Later on the absence can be changed to set the actual end date of it.
 A new absence updates the balance in the entitlement table.
 
-![image](static/images/HR_datamodel.png?raw=true "Data Model")
+[![image](static/images/HR_datamodel.png?raw=true "Data Model")](static/images/HR_datamodel.png)
